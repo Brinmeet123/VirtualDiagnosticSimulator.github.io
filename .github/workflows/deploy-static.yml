@@ -30,10 +30,10 @@ jobs:
         run: npm run build
         continue-on-error: false
         env:
-          OLLAMA_URL: ${{ secrets.OLLAMA_URL || 'http://localhost:11434' }}
-          OLLAMA_MODEL: ${{ secrets.OLLAMA_MODEL || 'llama3' }}
           NODE_ENV: production
-          GITHUB_PAGES: true
+          NEXT_OUTPUT: export
+          GITHUB_PAGES: "true"
+          DEMO_MODE: "true"
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3

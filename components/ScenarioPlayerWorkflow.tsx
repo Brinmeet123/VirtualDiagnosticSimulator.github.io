@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { Scenario, StabilityStatus, HPI, MedicalBackground, ProblemRepresentation as ProblemRepType, DifferentialDiagnosis, FinalDiagnosis, Plan } from '@/data/scenarios'
+import { getMockAssessment } from '@/lib/mockResponses'
 import DoctorPatientScene from './DoctorPatientScene'
 import ChatPanel from './ChatPanel'
 import SafetyCheck from './SafetyCheck'
@@ -170,9 +171,9 @@ export default function ScenarioPlayerWorkflow({ scenario }: { scenario: Scenari
       })
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        const errorMsg = errorData?.error || 'Failed to get assessment'
-        throw new Error(errorMsg)
+        // Static hosting (e.g. GitHub Pages): no API — use client-side mock
+        setAssessment(getMockAssessment() as AssessmentResult)
+        return
       }
 
       const result = await response.json()
@@ -186,7 +187,14 @@ export default function ScenarioPlayerWorkflow({ scenario }: { scenario: Scenari
     } catch (error: any) {
       console.error('Error:', error)
       const errorMessage = error?.message || 'Unknown error occurred'
+      const isNetworkError = errorMessage.includes('Failed to fetch') || errorMessage.includes('Load failed')
       const isOllamaError = errorMessage.includes('Ollama') || errorMessage.includes('ECONNREFUSED')
+      
+      // Static hosting: use mock assessment instead of error
+      if (isNetworkError) {
+        setAssessment(getMockAssessment() as AssessmentResult)
+        return
+      }
       
       setAssessment({
         overallRating: 'Error',

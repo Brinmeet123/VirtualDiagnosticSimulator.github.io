@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Scenario } from '@/data/scenarios'
+import { getMockAssessment } from '@/lib/mockResponses'
 import DoctorPatientScene from './DoctorPatientScene'
 import ChatPanel from './ChatPanel'
 import PhysicalExamPanel from './PhysicalExamPanel'
@@ -160,9 +161,8 @@ export default function ScenarioPlayer({ scenario }: Props) {
       })
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}))
-        const errorMsg = errorData?.error || 'Failed to get assessment'
-        throw new Error(errorMsg)
+        setAssessment(getMockAssessment() as AssessmentResult)
+        return
       }
 
       const result = await response.json()
@@ -176,7 +176,13 @@ export default function ScenarioPlayer({ scenario }: Props) {
     } catch (error: any) {
       console.error('Error:', error)
       const errorMessage = error?.message || 'Unknown error occurred'
+      const isNetworkError = errorMessage.includes('Failed to fetch') || errorMessage.includes('Load failed')
       const isOllamaError = errorMessage.includes('Ollama') || errorMessage.includes('ECONNREFUSED')
+      
+      if (isNetworkError) {
+        setAssessment(getMockAssessment() as AssessmentResult)
+        return
+      }
       
       setAssessment({
         overallRating: 'Error',

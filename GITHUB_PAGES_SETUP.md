@@ -54,10 +54,10 @@ After the workflow completes:
 
 ## Important Notes
 
-⚠️ **API routes won't work** on GitHub Pages (it only serves static files)
-- `/api/patient-chat`, `/api/assess`, `/api/explain-term` require a server
-- Static pages (home, scenarios list, scenario pages) will work fine
-- For full functionality, use **Vercel** or another platform that supports server-side rendering
+✅ **The app works on GitHub Pages** with demo mode:
+- When the API is unavailable (static hosting), the app uses **client-side mock responses** for chat, assessment, and term explanations
+- You get a full demo experience: scenarios, patient chat, and debrief all work with realistic mock data
+- For live AI (Ollama), run locally or deploy to **Vercel**
 
 ✅ **Future deployments** will be automatic:
 - Every push to `main` branch triggers the workflow

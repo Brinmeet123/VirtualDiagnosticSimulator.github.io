@@ -2,6 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { Scenario } from '@/data/scenarios'
+import { getMockPatientResponse } from '@/lib/mockResponses'
 import VocabText from './VocabText'
 
 type Message = {
@@ -85,25 +86,11 @@ export default function ChatPanel({ scenario, messages: initialMessages, onChatU
         }),
       })
 
-      // Check if response is ok before parsing
+      // Static hosting (e.g. GitHub Pages): no API — use client-side mock
       if (!response.ok) {
-        let errorData
-        try {
-          errorData = await response.json()
-        } catch {
-          // If JSON parsing fails, use status text
-          throw new Error(`Server error: ${response.status} ${response.statusText}`)
-        }
-        
-        // Show the actual error message from the API
-        const errorMsg = errorData?.error || errorData?.details || `Server error: ${response.status}`
-        console.error('API Error Response:', {
-          status: response.status,
-          error: errorData?.error,
-          details: errorData?.details,
-          fullResponse: errorData
-        })
-        throw new Error(errorMsg)
+        const mockMessage = getMockPatientResponse(scenario.id, newMessages)
+        setMessages([...newMessages, { role: 'patient', content: mockMessage }])
+        return
       }
 
       const data = await response.json()
@@ -124,6 +111,12 @@ export default function ChatPanel({ scenario, messages: initialMessages, onChatU
       const patientMessage: Message = { role: 'patient', content: data.message }
       setMessages([...newMessages, patientMessage])
     } catch (error: any) {
+      // Network or other error: fallback to mock on static sites (e.g. GitHub Pages)
+      if (error?.message?.includes('Failed to fetch') || error?.message?.includes('Load failed')) {
+        const mockMessage = getMockPatientResponse(scenario.id, newMessages)
+        setMessages([...newMessages, { role: 'patient', content: mockMessage }])
+        return
+      }
       console.error('Error in ChatPanel:', error)
       
       // Show more helpful error messages

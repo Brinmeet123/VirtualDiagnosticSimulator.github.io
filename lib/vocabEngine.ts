@@ -1,4 +1,5 @@
 import { vocab, getVocabTerm } from '@/data/vocab'
+import { getMockTermExplanation } from '@/lib/mockResponses'
 
 export type SourceType = 'chat' | 'exam' | 'tests' | 'diagnosis' | 'debrief'
 
@@ -103,8 +104,8 @@ export async function resolveVocab(
     })
     
     if (!response.ok) {
-      console.error('Failed to get AI explanation:', response.statusText)
-      return null
+      // Static hosting (e.g. GitHub Pages): use client-side mock
+      return getMockTermExplanation(trimmedTerm, context?.contextText, viewMode)
     }
     
     const data = await response.json()
@@ -120,8 +121,8 @@ export async function resolveVocab(
       source: 'ai'
     }
   } catch (error) {
-    console.error('Error fetching AI explanation:', error)
-    return null
+    // Network error on static host: use mock
+    return getMockTermExplanation(trimmedTerm, context?.contextText, viewMode)
   }
 }
 
