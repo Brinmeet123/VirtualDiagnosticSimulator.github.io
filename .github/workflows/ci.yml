@@ -52,8 +52,6 @@ jobs:
         run: npm run build
         env:
           # These are optional for build, but Next.js might need them
-          OLLAMA_URL: ${{ secrets.OLLAMA_URL || 'http://localhost:11434' }}
-          OLLAMA_MODEL: ${{ secrets.OLLAMA_MODEL || 'llama3' }}
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4

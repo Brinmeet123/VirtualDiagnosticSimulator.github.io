@@ -1,8 +1,6 @@
 import type { Metadata } from 'next'
 import './styles/globals.css'
-import Navbar from '@/components/Navbar'
-import Footer from '@/components/Footer'
-import HighlightProvider from '@/components/HighlightProvider'
+import SafeLayoutContent from '@/components/SafeLayoutContent'
 
 export const metadata: Metadata = {
   title: 'Virtual Diagnostic Simulator',
@@ -17,13 +15,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className="min-h-screen flex flex-col">
-        <HighlightProvider>
-          <Navbar />
-          <main className="flex-grow">
-            {children}
-          </main>
-          <Footer />
-        </HighlightProvider>
+        <SafeLayoutContent>{children}</SafeLayoutContent>
       </body>
     </html>
   )

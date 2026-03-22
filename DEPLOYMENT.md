@@ -6,7 +6,7 @@ This guide covers deploying the Virtual Diagnostic Simulator using GitHub Action
 
 - GitHub repository set up
 - Node.js 20+ installed locally (for testing)
-- Ollama running locally (for development)
+- OpenAI API key (optional; or use DEMO_MODE for mocks)
 
 ## Deployment Options
 
@@ -41,10 +41,8 @@ Vercel is the recommended platform for Next.js applications.
 #### Environment Variables in Vercel:
 
 Add these in Vercel Dashboard → Project Settings → Environment Variables:
-- `OLLAMA_URL`: Your Ollama server URL (if using remote Ollama)
-- `OLLAMA_MODEL`: Model name (default: llama3)
-
-**Note**: For production, you'll need to set up Ollama on a server or use a cloud service.
+- `OPENAI_API_KEY`: Your OpenAI API key (sk-...) for real AI
+- `DEMO_MODE`: Set to `true` for mock-only deployment
 
 ### Option 2: Docker Deployment
 
@@ -67,8 +65,7 @@ Deploy using Docker containers.
 4. **Run Container**
    ```bash
    docker run -p 3000:3000 \
-     -e OLLAMA_URL=http://your-ollama-server:11434 \
-     -e OLLAMA_MODEL=llama3 \
+     -e OPENAI_API_KEY=sk-your-key \
      your-username/virtual-diagnostic-simulator
    ```
 
@@ -80,7 +77,7 @@ For static export (limited functionality - no API routes).
 
 1. **Configure Next.js for Static Export**
    - Update `next.config.js` to include `output: 'export'`
-   - Note: This disables API routes, so Ollama features won't work
+   - Note: This disables API routes; use client-side mocks
 
 2. **Enable GitHub Pages**
    - Go to repo Settings → Pages
@@ -92,10 +89,9 @@ For static export (limited functionality - no API routes).
 
 ## Environment Variables
 
-### Required for Production
+### Required for Production (real AI)
 
-- `OLLAMA_URL`: URL of your Ollama server (e.g., `http://your-server:11434`)
-- `OLLAMA_MODEL`: Model name (e.g., `llama3`, `mistral`)
+- `OPENAI_API_KEY`: OpenAI API key (sk-...) from platform.openai.com
 
 ### Optional
 
@@ -154,18 +150,12 @@ npm start
 - Check workflow logs in GitHub Actions
 - Ensure environment variables are set
 
-### Ollama Connection Issues
-- Ensure Ollama is running and accessible
-- Check `OLLAMA_URL` environment variable
-- Verify model is pulled: `ollama pull llama3`
-
+### OpenAI / AI Issues
+- Ensure `OPENAI_API_KEY` is set (sk-...) in Vercel or env
+- Check `/api/ai-status` on your deployment
 ## Production Considerations
 
-1. **Ollama Server**: For production, you'll need Ollama running on a server
-   - Consider using a VPS or cloud instance
-   - Or use a managed Ollama service
-
-2. **Environment Variables**: Set all required variables in your deployment platform
+1. **Environment Variables**: Set all required variables in your deployment platform
 
 3. **Security**: Never commit API keys or secrets to the repository
 

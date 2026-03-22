@@ -177,18 +177,14 @@ export default function ScenarioPlayer({ scenario }: Props) {
       console.error('Error:', error)
       const errorMessage = error?.message || 'Unknown error occurred'
       const isNetworkError = errorMessage.includes('Failed to fetch') || errorMessage.includes('Load failed')
-      const isOllamaError = errorMessage.includes('Ollama') || errorMessage.includes('ECONNREFUSED')
-      
       if (isNetworkError) {
         setAssessment(getMockAssessment() as AssessmentResult)
         return
       }
-      
+
       setAssessment({
         overallRating: 'Error',
-        summary: isOllamaError 
-          ? 'Cannot connect to Ollama. Please ensure Ollama is running (ollama serve) or set DEMO_MODE=true to use mock responses.'
-          : 'There was an error generating your assessment. Please try again.',
+        summary: 'There was an error generating your assessment. Set OPENAI_API_KEY (sk-...) or DEMO_MODE=true for mocks.',
         strengths: [],
         areasForImprovement: [errorMessage],
         diagnosisFeedback: '',

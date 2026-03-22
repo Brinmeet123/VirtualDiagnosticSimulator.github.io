@@ -4,32 +4,10 @@ import { resolveTest, calculateTestScore } from '@/lib/testEngine'
 import { resolveDx, calculateDxScore, calculateFinalDxScore, calculateEfficiencyPenalty, checkMissingMustNotMiss } from '@/lib/dxEngine'
 import { diagnosisCatalog } from '@/data/diagnosisCatalog'
 import { getMockAssessment } from '@/lib/mockResponses'
+import { callLLM, hasConfiguredCloudLLM } from '@/lib/llm'
 
-const OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11434'
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'llama3'
-const DEMO_MODE = process.env.DEMO_MODE === 'true'
-
-async function callOllama(messages: Array<{ role: string; content: string }>) {
-  const res = await fetch(`${OLLAMA_URL}/api/chat`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: OLLAMA_MODEL,
-      messages: messages,
-      stream: false,
-    }),
-  })
-
-  if (!res.ok) {
-    const errorText = await res.text()
-    throw new Error(`Ollama API error: ${res.status} ${errorText}`)
-  }
-
-  const data = await res.json()
-  return data.message?.content || data.response || '{}'
-}
+const USE_DEMO_MOCKS =
+  process.env.DEMO_MODE === 'true' && !hasConfiguredCloudLLM()
 
 export async function POST(request: NextRequest) {
   try {
@@ -90,8 +68,7 @@ export async function POST(request: NextRequest) {
       selectedFinalDiagnosisName = selectedFinalDiagnosis?.name || 'None'
     }
 
-    // Demo mode: return mock assessment
-    if (DEMO_MODE) {
+    if (USE_DEMO_MOCKS) {
       const mockAssessment = getMockAssessment()
       // Still calculate test and diagnosis scores from actual data
       let totalScore = 0
@@ -318,9 +295,9 @@ Provide your comprehensive assessment as JSON with scores for each category.`
       { role: 'user', content: userPrompt },
     ]
 
-    const responseText = await callOllama(messages)
+    const responseText = await callLLM(messages)
     
-    // Try to extract JSON from the response (Ollama might wrap it in text)
+    // Try to extract JSON from the response (model might wrap it in text)
     let assessmentText = responseText
     const jsonMatch = responseText.match(/\{[\s\S]*\}/)
     if (jsonMatch) {
@@ -413,25 +390,21 @@ Provide your comprehensive assessment as JSON with scores for each category.`
   } catch (error: any) {
     console.error('Error in assess:', error)
     
-    // If Ollama fails and not in demo mode, check if we should fall back to demo mode
-    const shouldUseDemo = process.env.DEMO_MODE === 'true' || process.env.FALLBACK_TO_DEMO === 'true'
-    
-    if (shouldUseDemo && (error?.message?.includes('ECONNREFUSED') || error?.message?.includes('fetch failed'))) {
-      console.log('Ollama unavailable, falling back to demo mode')
+    const shouldUseDemo =
+      USE_DEMO_MOCKS || process.env.FALLBACK_TO_DEMO === 'true'
+
+    if (shouldUseDemo && (error?.message?.includes('fetch failed') || error?.message?.includes('OpenAI'))) {
+      console.log('OpenAI unavailable, falling back to demo mode')
       const mockAssessment = getMockAssessment()
       return NextResponse.json(mockAssessment)
     }
-    
-    let errorMessage = 'Failed to generate assessment'
-    if (error?.message?.includes('ECONNREFUSED') || error?.message?.includes('fetch failed')) {
-      errorMessage = 'Cannot connect to Ollama. Make sure Ollama is running on localhost:11434'
-    }
-    
+
+    const errorMessage = error?.message || 'Failed to generate assessment'
     return NextResponse.json(
-      { 
+      {
         error: errorMessage,
         details: error?.message || 'Unknown error',
-        demoModeAvailable: 'Set DEMO_MODE=true to use mock responses without Ollama'
+        demoModeAvailable: 'Set DEMO_MODE=true for mocks, or add OPENAI_API_KEY (sk-...).',
       },
       { status: 500 }
     )

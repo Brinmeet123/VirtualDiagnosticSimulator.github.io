@@ -21,6 +21,13 @@ type Props = {
   onTermSave?: (term: string) => void
 }
 
+/** Only GitHub Pages / static demo: hide API failures behind keyword mocks. Vercel shows real errors. */
+function shouldFallbackToPatientMocks(): boolean {
+  if (typeof window === 'undefined') return false
+  if (process.env.NEXT_PUBLIC_STATIC_DEMO === 'true') return true
+  return window.location.hostname.endsWith('.github.io')
+}
+
 export default function ChatPanel({ scenario, messages: initialMessages, onChatUpdate, viewMode = 'simple', onTermClick, onTermSave }: Props) {
   const [messages, setMessages] = useState<Message[]>(
     initialMessages || [
@@ -86,10 +93,26 @@ export default function ChatPanel({ scenario, messages: initialMessages, onChatU
         }),
       })
 
-      // Static hosting (e.g. GitHub Pages): no API — use client-side mock
       if (!response.ok) {
-        const mockMessage = getMockPatientResponse(scenario.id, newMessages)
-        setMessages([...newMessages, { role: 'patient', content: mockMessage }])
+        if (shouldFallbackToPatientMocks()) {
+          const mockMessage = getMockPatientResponse(scenario.id, newMessages)
+          setMessages([...newMessages, { role: 'patient', content: mockMessage }])
+          return
+        }
+        let detail = `${response.status} ${response.statusText}`
+        try {
+          const err = await response.json()
+          if (err.error || err.details) detail = [err.error, err.details].filter(Boolean).join(' — ')
+        } catch {
+          /* ignore */
+        }
+        setMessages([
+          ...newMessages,
+          {
+            role: 'patient',
+            content: `⚠️ The AI chat service failed (${detail}).\n\nSet **OPENAI_API_KEY** to your OpenAI key (**sk-...**) in Vercel → Production → Redeploy. **/api/ai-status**`,
+          },
+        ])
         return
       }
 
@@ -98,8 +121,8 @@ export default function ChatPanel({ scenario, messages: initialMessages, onChatU
       if (data.error) {
         // Show user-friendly error with demo mode suggestion
         let errorMsg = data.error
-        if (data.details && data.details.includes('Ollama')) {
-          errorMsg += '\n\n💡 Tip: Set DEMO_MODE=true to use mock responses without Ollama.'
+        if (data.details && data.details.includes('OPENAI')) {
+          errorMsg += '\n\n💡 Tip: Set OPENAI_API_KEY (sk-...) or DEMO_MODE=true for mocks.'
         }
         throw new Error(errorMsg)
       }
@@ -111,10 +134,20 @@ export default function ChatPanel({ scenario, messages: initialMessages, onChatU
       const patientMessage: Message = { role: 'patient', content: data.message }
       setMessages([...newMessages, patientMessage])
     } catch (error: any) {
-      // Network or other error: fallback to mock on static sites (e.g. GitHub Pages)
       if (error?.message?.includes('Failed to fetch') || error?.message?.includes('Load failed')) {
-        const mockMessage = getMockPatientResponse(scenario.id, newMessages)
-        setMessages([...newMessages, { role: 'patient', content: mockMessage }])
+        if (shouldFallbackToPatientMocks()) {
+          const mockMessage = getMockPatientResponse(scenario.id, newMessages)
+          setMessages([...newMessages, { role: 'patient', content: mockMessage }])
+          return
+        }
+        setMessages([
+          ...newMessages,
+          {
+            role: 'patient',
+            content:
+              '⚠️ Could not reach the server. If you are on Vercel, confirm the deployment finished and try again.',
+          },
+        ])
         return
       }
       console.error('Error in ChatPanel:', error)
@@ -130,8 +163,8 @@ export default function ChatPanel({ scenario, messages: initialMessages, onChatU
           errorContent = "⚠️ Error: API rate limit exceeded. Please try again later."
         } else if (errorMsg.includes('network') || errorMsg.includes('fetch')) {
           errorContent = "⚠️ Error: Network error. Please check your connection and that the server is running."
-        } else if (errorMsg.includes('ollama') || errorMsg.includes('econnrefused')) {
-          errorContent = "⚠️ Error: Cannot connect to Ollama. Make sure Ollama is running (ollama serve) or set DEMO_MODE=true to use mock responses."
+        } else if (errorMsg.includes('openai') || errorMsg.includes('api key')) {
+          errorContent = "⚠️ Error: Set OPENAI_API_KEY (sk-...) in env or DEMO_MODE=true for mock responses."
         } else {
           errorContent = `⚠️ Error: ${error.message}`
         }

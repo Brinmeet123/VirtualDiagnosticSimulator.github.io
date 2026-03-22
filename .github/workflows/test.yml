@@ -35,6 +35,4 @@ jobs:
         run: npm run build
         continue-on-error: false
         env:
-          OLLAMA_URL: ${{ secrets.OLLAMA_URL || 'http://localhost:11434' }}
-          OLLAMA_MODEL: ${{ secrets.OLLAMA_MODEL || 'llama3' }}
 

@@ -1,31 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getMockTermExplanation } from '@/lib/mockResponses'
+import { callLLM, hasConfiguredCloudLLM } from '@/lib/llm'
 
-const OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11434'
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'llama3'
-const DEMO_MODE = process.env.DEMO_MODE === 'true'
-
-async function callOllama(messages: Array<{ role: string; content: string }>) {
-  const res = await fetch(`${OLLAMA_URL}/api/chat`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: OLLAMA_MODEL,
-      messages: messages,
-      stream: false,
-    }),
-  })
-
-  if (!res.ok) {
-    const errorText = await res.text()
-    throw new Error(`Ollama API error: ${res.status} ${errorText}`)
-  }
-
-  const data = await res.json()
-  return data.message?.content || data.response || '{}'
-}
+const USE_DEMO_MOCKS =
+  process.env.DEMO_MODE === 'true' && !hasConfiguredCloudLLM()
 
 export async function POST(request: NextRequest) {
   // Store body data outside try block for fallback use
@@ -46,8 +24,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Demo mode: return mock explanation
-    if (DEMO_MODE) {
+    if (USE_DEMO_MOCKS) {
       const mockExplanation = getMockTermExplanation(selectedText, contextText, viewMode)
       return NextResponse.json(mockExplanation)
     }
@@ -119,7 +96,7 @@ If the term is used as a clinical descriptor (like "tachycardic" meaning "having
       { role: 'user', content: userPrompt },
     ]
 
-    const responseText = await callOllama(messages)
+    const responseText = await callLLM(messages)
     
     // Try to extract JSON from the response
     let jsonText = responseText
@@ -164,11 +141,11 @@ If the term is used as a clinical descriptor (like "tachycardic" meaning "having
   } catch (error: any) {
     console.error('Error in explain-term API:', error)
     
-    // If Ollama fails, try to return a basic mock explanation
-    const shouldUseDemo = process.env.DEMO_MODE === 'true' || process.env.FALLBACK_TO_DEMO === 'true'
-    
-    if (shouldUseDemo && (error?.message?.includes('ECONNREFUSED') || error?.message?.includes('fetch failed'))) {
-      console.log('Ollama unavailable, falling back to demo mode')
+    const shouldUseDemo =
+      USE_DEMO_MOCKS || process.env.FALLBACK_TO_DEMO === 'true'
+
+    if (shouldUseDemo && (error?.message?.includes('fetch failed') || error?.message?.includes('OpenAI'))) {
+      console.log('OpenAI unavailable, falling back to demo mode')
       // Use stored body data from try block scope
       const mockExplanation = getMockTermExplanation(
         bodyData.selectedText || 'term',
@@ -182,7 +159,7 @@ If the term is used as a clinical descriptor (like "tachycardic" meaning "having
       {
         error: 'Failed to explain term',
         details: error.message || 'Unknown error',
-        demoModeAvailable: 'Set DEMO_MODE=true to use mock responses without Ollama'
+        demoModeAvailable: 'Set OPENAI_API_KEY (sk-...) or DEMO_MODE=true for mocks'
       },
       { status: 500 }
     )

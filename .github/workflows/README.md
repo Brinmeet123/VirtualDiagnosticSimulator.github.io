@@ -50,8 +50,8 @@ This directory contains GitHub Actions workflows for CI/CD of the Virtual Diagno
 
 The following environment variables can be set as GitHub Secrets:
 
-- `OLLAMA_URL`: Ollama server URL (default: http://localhost:11434)
-- `OLLAMA_MODEL`: Ollama model name (default: llama3)
+- `OPENAI_API_KEY`: OpenAI API key (sk-...) for real AI
+- `DEMO_MODE`: Set to `true` for mock-only
 
 ## Usage
 

@@ -1,5 +1,5 @@
 /**
- * Mock responses for demo mode when Ollama is not available
+ * Mock responses for demo mode when OpenAI is not configured
  */
 
 export function getMockPatientResponse(

@@ -1,32 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { scenarios } from '@/data/scenarios'
 import { getMockPatientResponse } from '@/lib/mockResponses'
+import { callLLM, hasConfiguredCloudLLM } from '@/lib/llm'
 
-const OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11434'
-const OLLAMA_MODEL = process.env.OLLAMA_MODEL || 'llama3'
-const DEMO_MODE = process.env.DEMO_MODE === 'true'
-
-async function callOllama(messages: Array<{ role: string; content: string }>) {
-  const res = await fetch(`${OLLAMA_URL}/api/chat`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({
-      model: OLLAMA_MODEL,
-      messages: messages,
-      stream: false,
-    }),
-  })
-
-  if (!res.ok) {
-    const errorText = await res.text()
-    throw new Error(`Ollama API error: ${res.status} ${errorText}`)
-  }
-
-  const data = await res.json()
-  return data.message?.content || data.response || "I'm not sure how to respond to that."
-}
+const USE_DEMO_MOCKS =
+  process.env.DEMO_MODE === 'true' && !hasConfiguredCloudLLM()
 
 export async function POST(request: NextRequest) {
   // Store body data outside try block for fallback use
@@ -49,8 +27,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Scenario not found' }, { status: 404 })
     }
 
-    // Demo mode: return mock response
-    if (DEMO_MODE) {
+    if (USE_DEMO_MOCKS) {
       const mockResponse = getMockPatientResponse(scenarioId, messages)
       return NextResponse.json({ message: mockResponse })
     }
@@ -77,8 +54,7 @@ ${patientPersona.keyHistoryPoints.map(point => `- ${point}`).join('\n')}
 
 Answer ONLY as the patient in first person. Keep responses short and conversational, like a real patient would speak. Do NOT give medical advice or diagnoses.`
 
-    // Convert messages to Ollama format
-    const ollamaMessages = [
+    const llmMessages = [
       { role: 'system', content: systemPrompt },
       ...messages.map((msg: { role: string; content: string }) => ({
         role: msg.role === 'doctor' ? 'user' : 'assistant',
@@ -86,43 +62,30 @@ Answer ONLY as the patient in first person. Keep responses short and conversatio
       })),
     ]
 
-    console.log('Calling Ollama API with', ollamaMessages.length, 'messages')
-    
-    const patientResponse = await callOllama(ollamaMessages)
-    
-    console.log('Ollama response received successfully')
+    const patientResponse = await callLLM(llmMessages)
     return NextResponse.json({ message: patientResponse })
   } catch (error: any) {
     console.error('Error in patient-chat:', error)
     
-    // If Ollama fails and not in demo mode, check if we should fall back to demo mode
-    const shouldUseDemo = process.env.DEMO_MODE === 'true' || process.env.FALLBACK_TO_DEMO === 'true'
-    
-    if (shouldUseDemo && (error?.message?.includes('ECONNREFUSED') || error?.message?.includes('fetch failed'))) {
-      console.log('Ollama unavailable, falling back to demo mode')
+    const shouldUseDemo =
+      USE_DEMO_MOCKS || process.env.FALLBACK_TO_DEMO === 'true'
+
+    if (shouldUseDemo && (error?.message?.includes('fetch failed') || error?.message?.includes('OpenAI'))) {
+      console.log('OpenAI unavailable, falling back to demo mode')
       const mockResponse = getMockPatientResponse(
-        bodyData.scenarioId || '', 
+        bodyData.scenarioId || '',
         bodyData.messages || []
       )
       return NextResponse.json({ message: mockResponse })
     }
-    
-    let errorMessage = 'Failed to get patient response'
-    let errorDetails = error?.message || 'Unknown error'
-    
-    if (error?.message?.includes('ECONNREFUSED') || error?.message?.includes('fetch failed')) {
-      errorMessage = 'Cannot connect to Ollama. Make sure Ollama is running on localhost:11434'
-      errorDetails = 'Start Ollama with: ollama serve. Alternatively, set DEMO_MODE=true to use mock responses.'
-    } else if (error?.message) {
-      errorMessage = error.message
-    }
-    
+
+    const errorMessage = error?.message || 'Failed to get patient response'
     return NextResponse.json(
-      { 
+      {
         error: errorMessage,
-        details: errorDetails,
+        details: error?.message || 'Unknown error',
         type: error?.name || 'Error',
-        demoModeAvailable: 'Set DEMO_MODE=true to use mock responses without Ollama'
+        demoModeAvailable: 'Set DEMO_MODE=true for mock responses, or add OPENAI_API_KEY (sk-...).',
       },
       { status: 500 }
     )

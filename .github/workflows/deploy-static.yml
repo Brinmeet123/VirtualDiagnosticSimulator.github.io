@@ -33,7 +33,9 @@ jobs:
           NODE_ENV: production
           NEXT_OUTPUT: export
           GITHUB_PAGES: "true"
+          GITHUB_PAGES_BASEPATH: /VirtualDiagnosticSimulator.github.io
           DEMO_MODE: "true"
+          NEXT_PUBLIC_STATIC_DEMO: "true"
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
