@@ -113,14 +113,9 @@ export default function ChatPanel({ scenario, messages: initialMessages, onChatU
         } catch {
           /* ignore */
         }
-        const quota =
-          /insufficient_quota|quota or billing|exceeded your current quota/i.test(detail)
-        if (quota) {
+        if (/Ollama error|ECONNREFUSED|Cannot reach Ollama|fetch failed/i.test(detail)) {
           hint =
-            'Your key may already be set; OpenAI has **no quota / billing**. Add credits: https://platform.openai.com/account/billing — or set **DEMO_MODE=true** in Vercel and redeploy for mock chat.'
-        } else if (/OPENAI_API_KEY is not set|not configured|no api key/i.test(detail)) {
-          hint =
-            'Set **OPENAI_API_KEY** (sk-...) in Vercel → Environment → Production → Redeploy. **/api/ai-status**'
+            'Run **ollama serve**, **ollama pull** your model, and set **OLLAMA_BASE_URL** / **OLLAMA_MODEL** if needed. Or **DEMO_MODE=true** for mocks. See **/api/ai-status**.'
         }
         setMessages([
           ...newMessages,
@@ -139,8 +134,6 @@ export default function ChatPanel({ scenario, messages: initialMessages, onChatU
         let errorMsg = data.error
         if (data.demoModeAvailable) {
           errorMsg += `\n\n💡 ${data.demoModeAvailable}`
-        } else if (data.details && data.details.includes('OPENAI')) {
-          errorMsg += '\n\n💡 Tip: Set OPENAI_API_KEY (sk-...) or DEMO_MODE=true for mocks.'
         }
         throw new Error(errorMsg)
       }
@@ -175,21 +168,17 @@ export default function ChatPanel({ scenario, messages: initialMessages, onChatU
       
       if (error?.message) {
         const errorMsg = error.message.toLowerCase()
-        if (
-          errorMsg.includes('insufficient_quota') ||
-          errorMsg.includes('quota or billing') ||
-          errorMsg.includes('exceeded your current quota')
-        ) {
+        if (errorMsg.includes('ollama') || errorMsg.includes('econnrefused')) {
           errorContent =
-            '⚠️ OpenAI **billing / quota** issue (not a missing key). Add credits: https://platform.openai.com/account/billing — or set DEMO_MODE=true for mocks.'
-        } else if (errorMsg.includes('api key') || errorMsg.includes('openai')) {
-          errorContent = "⚠️ Error: OpenAI API key is not configured or invalid. Please check your .env.local file and restart the server. Test your key at /api/test-key"
+            '⚠️ **Ollama** not reachable. Run `ollama serve`, pull a model (`ollama pull llama3.2`), and check **OLLAMA_BASE_URL** in `.env.local`. Try **/api/test-key**.'
         } else if (errorMsg.includes('rate limit')) {
-          errorContent = "⚠️ Error: API rate limit exceeded. Please try again later."
+          errorContent = '⚠️ Error: Rate limit or overload. Try again shortly or use a smaller model.'
         } else if (errorMsg.includes('network') || errorMsg.includes('fetch')) {
-          errorContent = "⚠️ Error: Network error. Please check your connection and that the server is running."
-        } else if (errorMsg.includes('openai') || errorMsg.includes('api key')) {
-          errorContent = "⚠️ Error: Set OPENAI_API_KEY (sk-...) in env or DEMO_MODE=true for mock responses."
+          errorContent =
+            '⚠️ Error: Network error. Check Ollama is running and the server can reach OLLAMA_BASE_URL.'
+        } else if (errorMsg.includes('demo_mode') || errorMsg.includes('no llm')) {
+          errorContent =
+            '⚠️ Error: Set **DEMO_MODE=true** for mocks, or run Ollama for real responses.'
         } else {
           errorContent = `⚠️ Error: ${error.message}`
         }

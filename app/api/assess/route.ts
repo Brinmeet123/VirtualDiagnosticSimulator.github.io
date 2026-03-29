@@ -4,10 +4,9 @@ import { resolveTest, calculateTestScore } from '@/lib/testEngine'
 import { resolveDx, calculateDxScore, calculateFinalDxScore, calculateEfficiencyPenalty, checkMissingMustNotMiss } from '@/lib/dxEngine'
 import { diagnosisCatalog } from '@/data/diagnosisCatalog'
 import { getMockAssessment } from '@/lib/mockResponses'
-import { callLLM, hasConfiguredCloudLLM } from '@/lib/llm'
+import { callLLM } from '@/lib/llm'
 
-const USE_DEMO_MOCKS =
-  process.env.DEMO_MODE === 'true' && !hasConfiguredCloudLLM()
+const USE_DEMO_MOCKS = process.env.DEMO_MODE === 'true'
 
 export async function POST(request: NextRequest) {
   try {
@@ -393,8 +392,13 @@ Provide your comprehensive assessment as JSON with scores for each category.`
     const shouldUseDemo =
       USE_DEMO_MOCKS || process.env.FALLBACK_TO_DEMO === 'true'
 
-    if (shouldUseDemo && (error?.message?.includes('fetch failed') || error?.message?.includes('OpenAI'))) {
-      console.log('OpenAI unavailable, falling back to demo mode')
+    if (
+      shouldUseDemo &&
+      (error?.message?.includes('fetch failed') ||
+        error?.message?.includes('Ollama') ||
+        error?.message?.includes('ECONNREFUSED'))
+    ) {
+      console.log('Ollama unavailable, falling back to demo mode')
       const mockAssessment = getMockAssessment()
       return NextResponse.json(mockAssessment)
     }
@@ -404,7 +408,8 @@ Provide your comprehensive assessment as JSON with scores for each category.`
       {
         error: errorMessage,
         details: error?.message || 'Unknown error',
-        demoModeAvailable: 'Set DEMO_MODE=true for mocks, or add OPENAI_API_KEY (sk-...).',
+        demoModeAvailable:
+          'Set DEMO_MODE=true for mocks, or fix Ollama (ollama serve, OLLAMA_BASE_URL, OLLAMA_MODEL).',
       },
       { status: 500 }
     )

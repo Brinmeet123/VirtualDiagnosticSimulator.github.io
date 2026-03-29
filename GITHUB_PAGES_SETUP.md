@@ -38,4 +38,4 @@ The static build uses `basePath` `/VirtualDiagnosticSimulator.github.io` so asse
 ## Notes
 
 - Demo uses client-side mocks (no server on GitHub Pages).
-- For real AI, deploy to **Vercel** with `OPENAI_API_KEY`.
+- For real AI, deploy to **Vercel** (or similar) with a reachable **Ollama** URL in `OLLAMA_BASE_URL`, or use `DEMO_MODE=true` for mocks.

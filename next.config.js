@@ -1,11 +1,13 @@
 /** @type {import('next').NextConfig} */
-// Never use static export / odd basePath during `next dev` — breaks dev overlay ("missing required error components")
-const isDev = process.env.NODE_ENV === 'development'
+// Never use static export / odd basePath during `next dev` — breaks dev overlay ("missing required error components").
+// Use NODE_ENV !== 'production' so unset NODE_ENV still counts as dev (avoids accidentally applying export in dev).
+const isDev = process.env.NODE_ENV !== 'production'
 
 const nextConfig = {
   reactStrictMode: true,
   webpack: (config, { dev, isServer }) => {
-    // Dev: slow first compile or cold start can exceed default chunk load timeout in the browser.
+    // Used for `next build` and `npm run dev` (webpack). `npm run dev:turbo` skips this.
+    // Dev (webpack): slow first compile can exceed default chunk load timeout in the browser.
     if (dev && !isServer) {
       config.output = config.output || {}
       config.output.chunkLoadTimeout = 300000

@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getMockTermExplanation } from '@/lib/mockResponses'
-import { callLLM, hasConfiguredCloudLLM } from '@/lib/llm'
+import { callLLM } from '@/lib/llm'
 
-const USE_DEMO_MOCKS =
-  process.env.DEMO_MODE === 'true' && !hasConfiguredCloudLLM()
+const USE_DEMO_MOCKS = process.env.DEMO_MODE === 'true'
 
 export async function POST(request: NextRequest) {
   // Store body data outside try block for fallback use
@@ -144,8 +143,13 @@ If the term is used as a clinical descriptor (like "tachycardic" meaning "having
     const shouldUseDemo =
       USE_DEMO_MOCKS || process.env.FALLBACK_TO_DEMO === 'true'
 
-    if (shouldUseDemo && (error?.message?.includes('fetch failed') || error?.message?.includes('OpenAI'))) {
-      console.log('OpenAI unavailable, falling back to demo mode')
+    if (
+      shouldUseDemo &&
+      (error?.message?.includes('fetch failed') ||
+        error?.message?.includes('Ollama') ||
+        error?.message?.includes('ECONNREFUSED'))
+    ) {
+      console.log('Ollama unavailable, falling back to demo mode')
       // Use stored body data from try block scope
       const mockExplanation = getMockTermExplanation(
         bodyData.selectedText || 'term',
@@ -159,7 +163,8 @@ If the term is used as a clinical descriptor (like "tachycardic" meaning "having
       {
         error: 'Failed to explain term',
         details: error.message || 'Unknown error',
-        demoModeAvailable: 'Set OPENAI_API_KEY (sk-...) or DEMO_MODE=true for mocks'
+        demoModeAvailable:
+          'Set DEMO_MODE=true for mocks, or fix Ollama (ollama serve, OLLAMA_BASE_URL, OLLAMA_MODEL).'
       },
       { status: 500 }
     )

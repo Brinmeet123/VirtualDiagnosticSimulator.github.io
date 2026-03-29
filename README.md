@@ -9,20 +9,20 @@ A Next.js-based medical training simulator that allows students to practice clin
 - **Diagnostic Testing**: Order tests and view results
 - **Clinical Reasoning Practice**: Formulate differential diagnoses and receive detailed feedback
 - **Educational Assessment**: Get comprehensive feedback on your performance
-- **Demo Mode**: Mock responses when no API key (e.g. GitHub Pages)
+- **Demo Mode**: Mock responses with `DEMO_MODE=true` or on static GitHub Pages
 
 ## Tech Stack
 
 - **Framework**: Next.js 14 (App Router) with TypeScript
 - **Styling**: Tailwind CSS
-- **AI**: OpenAI (ChatGPT API, key from platform.openai.com)
+- **AI**: **Ollama** only (OpenAI-compatible `/v1/chat/completions` on your Ollama server)
 - **Deployment**: Ready for Vercel, GitHub Pages, or similar
 
 ## Live Demo
 
 🚀 **[Try the Live Demo](https://brinmeet123.github.io/VirtualDiagnosticSimulator.github.io/)**
 
-The GitHub Pages demo uses mock responses (no server). For **real AI** set **OPENAI_API_KEY** (e.g. on Vercel or in `.env.local`).
+The GitHub Pages demo uses mock responses (no server). For **real AI**, run the app with **Ollama** (`ollama serve`, `ollama pull <model>`) or host with a reachable `OLLAMA_BASE_URL` (e.g. Vercel + remote Ollama).
 
 ---
 
@@ -31,6 +31,7 @@ The GitHub Pages demo uses mock responses (no server). For **real AI** set **OPE
 ### Prerequisites
 
 - **Node.js 20+** and npm 9+ (specified in `package.json` engines)
+- **[Ollama](https://ollama.com)** installed if you want real AI locally (or set `DEMO_MODE=true` for mocks)
 
 ### Installation
 
@@ -41,12 +42,16 @@ npm install
 
 2. (Optional) Create a `.env.local` file:
 ```env
-OPENAI_API_KEY=sk-your-key-here
-OPENAI_MODEL=gpt-4o-mini
-# Or for demo only: DEMO_MODE=true
+OLLAMA_BASE_URL=http://127.0.0.1:11434
+OLLAMA_MODEL=llama3.2
+# Optional — only if your Ollama host requires a Bearer token (local Ollama: omit)
+# OLLAMA_API_KEY=your-token
+
+# Mocks only (no Ollama):
+# DEMO_MODE=true
 ```
 
-> **Environment Variables:** `OPENAI_API_KEY` (sk-...) from https://platform.openai.com/api-keys | `OPENAI_MODEL` (default: gpt-4o-mini) | `DEMO_MODE=true` for mocks only.
+> **Env:** `OLLAMA_BASE_URL`, `OLLAMA_MODEL` | `DEMO_MODE=true` for mocks only. See `/api/ai-status` when the app is running.
 
 3. Run the development server:
 ```bash
@@ -59,37 +64,37 @@ npm run dev
 
 | Where you run the app | How to get real AI |
 |------------------------|---------------------|
-| **Locally** or **Vercel** | Set **OPENAI_API_KEY** (sk-...) in `.env.local` or Vercel env. |
-| **Vercel / hosted** | Set **OpenAI** env var: `OPENAI_API_KEY=sk-...`. The app uses OpenAI for chat, assessment, and term explanations. |
-| **GitHub Pages** | Static only — uses client-side mocks; for real AI use Vercel with OPENAI_API_KEY. |
+| **Locally** | Run `ollama serve`, `ollama pull <OLLAMA_MODEL>`. Defaults: `http://127.0.0.1:11434` and `llama3.2`. |
+| **Vercel / hosted** | Set `OLLAMA_BASE_URL` to an Ollama server **reachable from the internet** (not your laptop’s localhost). |
+| **GitHub Pages** | Static only — mocks; use Vercel or local app for Ollama-backed AI. |
 
-**Priority:** If `OPENAI_API_KEY` is set, the app uses OpenAI. Otherwise use DEMO_MODE=true for mocks. If neither is available and you’re on a server, set `DEMO_MODE=true` for mocks.
+**Behavior:** If `DEMO_MODE=true`, all AI routes use mocks. Otherwise the app calls Ollama at `OLLAMA_BASE_URL` with `OLLAMA_MODEL`.
 
 ### Demo Mode vs AI Mode
 
-**Demo Mode** (`DEMO_MODE=true` or no API key):
-- ✅ Works without any AI backend — good for static sites and demos
+**Demo Mode** (`DEMO_MODE=true`):
+- ✅ Works without Ollama — good for static sites and demos
 - ✅ Uses realistic mock responses
-- 📝 Use for: GitHub Pages, quick demos
+- 📝 Use for: GitHub Pages, quick demos, Vercel without Ollama
 
-**AI Mode** (OPENAI_API_KEY set):
-- ✅ Real patient chat, assessments, and term explanations
-- 📝 Use for: Local or Vercel with OpenAI API key
+**AI Mode** (default when `DEMO_MODE` is not `true`):
+- ✅ Real patient chat, assessments, and term explanations via Ollama
+- 📝 Requires a running Ollama server the app can reach
 
 ### Testing Your AI Connection
 
 **Option 1: Test endpoint**
 1. Run the app (`npm run dev`) and open [http://localhost:3000/api/test-key](http://localhost:3000/api/test-key)
-2. You should see `"success": true` and `"provider": "OpenAI"` if OPENAI_API_KEY is set
+2. You should see `"success": true` and `"provider": "Ollama"` when Ollama is up
 
 **Option 2: Test in a scenario**
 1. Go to [http://localhost:3000/scenarios](http://localhost:3000/scenarios), open a scenario, and ask the patient a question
-2. If you get an error, set `OPENAI_API_KEY` (sk-...) or `DEMO_MODE=true` for mocks
+2. If you get an error, start Ollama or set `DEMO_MODE=true` for mocks
 
 **Common issues:**
-- **Local:** Set `OPENAI_API_KEY` in `.env.local` or `DEMO_MODE=true` for mocks
-- **Vercel/hosted:** Add env var `OPENAI_API_KEY` (and optionally `DEMO_MODE=false`) so the app uses real AI
-- **GitHub Pages:** Stays in demo/mock mode; for real AI use Vercel + OpenAI or run the app locally
+- **Local:** Run `ollama serve` and pull your model, or use `DEMO_MODE=true`
+- **Vercel/hosted:** `OLLAMA_BASE_URL` must not be localhost; use a tunnel/VPS or `DEMO_MODE=true`
+- **GitHub Pages:** Demo/mock only; run locally or Vercel for Ollama
 
 ## Project Structure
 
@@ -149,7 +154,7 @@ npm start
 
 ### Deploy with Vercel (Recommended)
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/Brinmeet123/VirtualDiagnosticSimulator.github.io&env=DEMO_MODE%2COPENAI_API_KEY&envDescription=DEMO_MODE%3Dtrue%20for%20mocks%2C%20or%20OPENAI_API_KEY%20for%20real%20AI&envLink=https://github.com/Brinmeet123/VirtualDiagnosticSimulator.github.io%23environment-variables)
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/Brinmeet123/VirtualDiagnosticSimulator.github.io&env=DEMO_MODE%2COLLAMA_BASE_URL%2COLLAMA_MODEL&envDescription=DEMO_MODE%3Dtrue%20for%20mocks%3B%20otherwise%20set%20OLLAMA_BASE_URL%20to%20your%20Ollama%20server&envLink=https://github.com/Brinmeet123/VirtualDiagnosticSimulator.github.io%23environment-variables)
 
 **One-Click Deploy:**
 1. Click the "Deploy with Vercel" button above
@@ -167,9 +172,9 @@ npm start
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
-| `OPENAI_API_KEY` | **Yes** (for real AI) | — | OpenAI API key; enables real AI on Vercel (patient chat, assessment, term explain) |
-| `DEMO_MODE` | Yes (if no OpenAI) | `false` | Set to `true` to use mock responses when no AI is configured |
-| `OPENAI_MODEL` | No | `gpt-4o-mini` | OpenAI model |
+| `OLLAMA_BASE_URL` | For real AI | `http://127.0.0.1:11434` | Ollama base URL (must be reachable from the app; not localhost from Vercel to your laptop) |
+| `OLLAMA_MODEL` | No | `llama3.2` | Model name — `ollama pull` on the Ollama host |
+| `DEMO_MODE` | No | unset | `true` = mocks only, no Ollama calls |
 
 **Recommended Vercel Settings:**
 - **Framework Preset:** Next.js (auto-detected)
@@ -178,23 +183,24 @@ npm start
 - **Install Command:** `npm install` (default)
 - **Node.js Version:** 20.x (specified in package.json)
 
-**For real AI on Vercel (recommended):**
+**For real AI on Vercel:** point `OLLAMA_BASE_URL` at an Ollama instance reachable from the internet (same as for any remote server). Localhost on your Mac is **not** reachable from Vercel.
+
 ```env
-OPENAI_API_KEY=sk-your-key-here
+OLLAMA_BASE_URL=https://your-ollama-host.example
+OLLAMA_MODEL=llama3.2
 ```
-- The variable **name must be exactly `OPENAI_API_KEY`** (not “VDS” or a display label).
-- Check **Production** (and Preview if needed) when saving the variable.
-- **Redeploy** after adding or changing env vars (Deployments → ⋮ → Redeploy).
-- If `DEMO_MODE=true` is set, real AI still runs when `OPENAI_API_KEY` is set (OpenAI wins).
 
-**Debug on your live site:** open `https://your-app.vercel.app/api/ai-status` — it shows whether OpenAI is configured (no key is exposed).
+- **Redeploy** after changing env vars (Deployments → ⋮ → Redeploy).
+- If `DEMO_MODE=true`, the app uses mocks and does not call Ollama.
 
-**For demo-only (no API key):**
+**Debug on your live site:** open `https://your-app.vercel.app/api/ai-status` — shows Ollama URL/model (no secrets).
+
+**For demo-only:**
 ```env
 DEMO_MODE=true
 ```
 
-> **Note:** Set `OPENAI_API_KEY` (sk-...) for real AI on Vercel or locally.
+> **Note:** Locally, run `ollama serve` and use defaults unless you override `OLLAMA_*` in `.env.local`.
 
 ### Other Deployment Options
 
@@ -209,7 +215,7 @@ This project includes GitHub Actions workflows for automated deployment. See [DE
    - Good for GitHub Pages, but limited functionality
    - Set `NEXT_OUTPUT=export` environment variable
 
-**⚠️ Important:** Set `DEMO_MODE=true` for mock-only deployment when no API key is configured.
+**⚠️ Important:** Set `DEMO_MODE=true` for mock-only deployment when you are not exposing a reachable Ollama URL.
 
 ### GitHub Actions Workflows:
 

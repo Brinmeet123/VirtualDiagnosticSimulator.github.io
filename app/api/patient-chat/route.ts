@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { scenarios } from '@/data/scenarios'
 import { getMockPatientResponse } from '@/lib/mockResponses'
-import { callLLM, hasConfiguredCloudLLM } from '@/lib/llm'
+import { callLLM } from '@/lib/llm'
 
-const USE_DEMO_MOCKS =
-  process.env.DEMO_MODE === 'true' && !hasConfiguredCloudLLM()
+const USE_DEMO_MOCKS = process.env.DEMO_MODE === 'true'
 
 export async function POST(request: NextRequest) {
   // Store body data outside try block for fallback use
@@ -70,8 +69,13 @@ Answer ONLY as the patient in first person. Keep responses short and conversatio
     const shouldUseDemo =
       USE_DEMO_MOCKS || process.env.FALLBACK_TO_DEMO === 'true'
 
-    if (shouldUseDemo && (error?.message?.includes('fetch failed') || error?.message?.includes('OpenAI'))) {
-      console.log('OpenAI unavailable, falling back to demo mode')
+    if (
+      shouldUseDemo &&
+      (error?.message?.includes('fetch failed') ||
+        error?.message?.includes('Ollama') ||
+        error?.message?.includes('ECONNREFUSED'))
+    ) {
+      console.log('LLM unavailable, falling back to demo mode')
       const mockResponse = getMockPatientResponse(
         bodyData.scenarioId || '',
         bodyData.messages || []
@@ -80,20 +84,18 @@ Answer ONLY as the patient in first person. Keep responses short and conversatio
     }
 
     const errorMessage = error?.message || 'Failed to get patient response'
-    const isQuota =
-      errorMessage.includes('insufficient_quota') ||
-      errorMessage.includes('quota or billing') ||
-      errorMessage.toLowerCase().includes('exceeded your current quota')
-    const hint = isQuota
-      ? 'Your API key is fine; OpenAI returned no quota. Add billing at https://platform.openai.com/account/billing or set DEMO_MODE=true for mocks.'
-      : errorMessage.includes('OPENAI_API_KEY is not set')
-        ? 'Set OPENAI_API_KEY (sk-...) in Vercel env and redeploy, or DEMO_MODE=true for mocks.'
-        : 'Set DEMO_MODE=true for mock responses, or fix the OpenAI error above.'
+    const isOllamaIssue =
+      errorMessage.includes('Ollama') ||
+      errorMessage.includes('ECONNREFUSED') ||
+      errorMessage.includes('fetch failed')
+    const hint = isOllamaIssue
+      ? 'Start Ollama (ollama serve), pull your model (e.g. ollama pull llama3.2), and set OLLAMA_BASE_URL / OLLAMA_MODEL if needed. Or set DEMO_MODE=true for mocks.'
+      : 'Set DEMO_MODE=true for mock responses, or fix the error above.'
 
     return NextResponse.json(
       {
         error: errorMessage,
-        details: isQuota ? undefined : errorMessage,
+        details: errorMessage,
         type: error?.name || 'Error',
         demoModeAvailable: hint,
       },

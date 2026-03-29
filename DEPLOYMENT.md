@@ -6,7 +6,7 @@ This guide covers deploying the Virtual Diagnostic Simulator using GitHub Action
 
 - GitHub repository set up
 - Node.js 20+ installed locally (for testing)
-- OpenAI API key (optional; or use DEMO_MODE for mocks)
+- **Ollama** running (or `DEMO_MODE=true` for mocks only)
 
 ## Deployment Options
 
@@ -49,8 +49,11 @@ If you see **“No Next.js version detected”**, Vercel is not using the folder
 #### Environment Variables in Vercel:
 
 Add these in Vercel Dashboard → Project Settings → Environment Variables:
-- `OPENAI_API_KEY`: Your OpenAI API key (sk-...) for real AI
-- `DEMO_MODE`: Set to `true` for mock-only deployment
+- `OLLAMA_BASE_URL`: URL of your Ollama server (default locally: `http://127.0.0.1:11434`). On Vercel this must be a **publicly reachable** URL (tunnel, VPS, etc.); localhost on the Vercel VM will not reach your laptop.
+- `OLLAMA_MODEL`: Model name (default `llama3.2`) — run `ollama pull <name>` on the Ollama host first
+- `DEMO_MODE`: Set to `true` for mock-only deployment (no Ollama calls)
+
+**Local dev:** Run `ollama serve`, pull a model, then `npm run dev`. Override URL/model with `OLLAMA_BASE_URL` / `OLLAMA_MODEL` in `.env.local`.
 
 ### Option 2: Docker Deployment
 
@@ -73,7 +76,8 @@ Deploy using Docker containers.
 4. **Run Container**
    ```bash
    docker run -p 3000:3000 \
-     -e OPENAI_API_KEY=sk-your-key \
+     -e OLLAMA_BASE_URL=http://host.docker.internal:11434 \
+     -e OLLAMA_MODEL=llama3.2 \
      your-username/virtual-diagnostic-simulator
    ```
 
@@ -97,12 +101,14 @@ For static export (limited functionality - no API routes).
 
 ## Environment Variables
 
-### Required for Production (real AI)
+### Production (real AI via Ollama)
 
-- `OPENAI_API_KEY`: OpenAI API key (sk-...) from platform.openai.com
+- `OLLAMA_BASE_URL`: Must be reachable from the app process (same machine, Docker host, or public URL)
+- `OLLAMA_MODEL`: Must exist on that Ollama server (`ollama pull <name>`)
 
 ### Optional
 
+- `DEMO_MODE=true`: mocks only; no Ollama
 - `NODE_ENV`: Set to `production` for production builds
 - `NEXT_PUBLIC_*`: Any public environment variables
 
@@ -158,9 +164,9 @@ npm start
 - Check workflow logs in GitHub Actions
 - Ensure environment variables are set
 
-### OpenAI / AI Issues
-- Ensure `OPENAI_API_KEY` is set (sk-...) in Vercel or env
-- Check `/api/ai-status` on your deployment
+### Ollama / AI issues
+- Ensure Ollama is running and the model is pulled; check `OLLAMA_BASE_URL` and `OLLAMA_MODEL`
+- Open `/api/ai-status` and `/api/test-key` on your deployment
 ## Production Considerations
 
 1. **Environment Variables**: Set all required variables in your deployment platform
