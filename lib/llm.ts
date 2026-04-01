@@ -6,6 +6,7 @@
  * - OLLAMA_MODEL — default llama3.2 (run `ollama pull <name>` first)
  * - OLLAMA_API_KEY or OLLAMA_KEY — optional Bearer token for hosted Ollama (local Ollama usually needs neither)
  * - DEMO_MODE=true — use mock responses in API routes (no Ollama calls)
+ * - USE_LOCAL_LLM_DEBRIEF_POLISH=true — optional local Ollama pass to smooth prose only (see /lib/debrief/polishDebrief.ts)
  */
 
 export type LLMMessage = { role: string; content: string }

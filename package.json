@@ -11,6 +11,8 @@
     "dev": "next dev -p 3000",
     "dev:turbo": "next dev -p 3000 --turbo",
     "dev:clean": "npm run clean && next dev -p 3000",
+    "dev:fresh": "npm run clean && npx --yes kill-port 3000 && next dev -p 3000",
+    "dev:safe": "npm run clean && cross-env NEXT_DEV_WEBPACK_NO_CACHE=1 next dev -p 3000",
     "build": "next build",
     "vercel-build": "next build",
     "start": "next start",
@@ -23,6 +25,7 @@
     "react-resizable-panels": "^4.0.13"
   },
   "devDependencies": {
+    "cross-env": "^7.0.3",
     "@types/node": "^20.0.0",
     "@types/react": "^18.2.0",
     "@types/react-dom": "^18.2.0",

@@ -1,3 +1,5 @@
+import type { ScenarioDebriefConfig } from "@/types/debrief";
+
 export type ScenarioDifficulty = "Beginner" | "Intermediate" | "Advanced";
 
 export type VitalSigns = {
@@ -177,6 +179,8 @@ export type Scenario = {
   requiredMustNotMiss?: string[];        // dxIds that must appear in DDx
   finalDxId?: string;                    // correct final diagnosis id
   teachingPoints: string[];   // Key points for debrief
+  /** Optional override; defaults are in data/debriefConfigs.ts by scenario id */
+  debriefConfig?: ScenarioDebriefConfig;
 };
 
 export const scenarios: Scenario[] = [

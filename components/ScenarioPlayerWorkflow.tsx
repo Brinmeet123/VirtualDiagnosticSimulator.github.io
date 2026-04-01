@@ -32,6 +32,16 @@ type AssessmentResult = {
   diagnosisFeedback: string
   missedKeyHistoryPoints: string[]
   testSelectionFeedback: string
+  debriefStructured?: {
+    summary: string
+    strengths: string[]
+    missedOpportunities: string[]
+    diagnosticReasoning: string[]
+    nextStepAdvice: string[]
+    clinicalPearls: string[]
+    vocabToReview: string[]
+  }
+  source?: string
   scores?: {
     historyTaking?: number
     redFlags?: number

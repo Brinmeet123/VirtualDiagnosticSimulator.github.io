@@ -7,6 +7,16 @@ import { vocab, getVocabTerm } from '@/data/vocab'
 
 type ViewMode = 'simple' | 'clinical'
 
+type DebriefStructured = {
+  summary: string
+  strengths: string[]
+  missedOpportunities: string[]
+  diagnosticReasoning: string[]
+  nextStepAdvice: string[]
+  clinicalPearls: string[]
+  vocabToReview: string[]
+}
+
 type AssessmentResult = {
   overallRating: string
   summary: string
@@ -32,6 +42,9 @@ type AssessmentResult = {
     diagnosis?: number
     communication?: number
   }
+  /** Deterministic debrief engine */
+  debriefStructured?: DebriefStructured
+  source?: string
 }
 
 type Props = {
@@ -98,8 +111,9 @@ export default function SummaryPanel({ scenario, assessment, viewMode = 'simple'
     .slice(0, 5)
     .map(term => term.term)
 
+  const ds = assessment.debriefStructured
   const debriefContext =
-    `${assessment.summary}\n${assessment.strengths.join('\n')}\n${assessment.areasForImprovement.join('\n')}\n${assessment.diagnosisFeedback}\n${assessment.testSelectionFeedback}\n${scenario.teachingPoints.join('\n')}`
+    `${assessment.summary}\n${assessment.strengths.join('\n')}\n${assessment.areasForImprovement.join('\n')}\n${assessment.diagnosisFeedback}\n${assessment.testSelectionFeedback}\n${scenario.teachingPoints.join('\n')}${ds ? `\n${ds.nextStepAdvice.join('\n')}\n${ds.clinicalPearls.join('\n')}` : ''}`
 
   return (
     <div className="bg-white rounded-lg shadow-md p-6 mb-6">
@@ -209,6 +223,19 @@ export default function SummaryPanel({ scenario, assessment, viewMode = 'simple'
         </div>
       </div>
 
+      {ds?.diagnosticReasoning && ds.diagnosticReasoning.length > 0 && (
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Diagnostic reasoning</h3>
+          <ul className="list-disc list-inside space-y-2 text-gray-700">
+            {ds.diagnosticReasoning.map((line, idx) => (
+              <li key={idx}>
+                <VocabText text={line} viewMode={viewMode} onTermClick={onTermClick} onTermSave={onTermSave} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
       <div className="mb-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-2">Diagnosis Feedback</h3>
         <p className="text-gray-700">
@@ -250,6 +277,39 @@ export default function SummaryPanel({ scenario, assessment, viewMode = 'simple'
           />
         </p>
       </div>
+
+      {ds?.nextStepAdvice && ds.nextStepAdvice.length > 0 && (
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Better next steps</h3>
+          <ul className="list-disc list-inside space-y-1 text-gray-700">
+            {ds.nextStepAdvice.map((line, idx) => (
+              <li key={idx}>
+                <VocabText text={line} viewMode={viewMode} onTermClick={onTermClick} onTermSave={onTermSave} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {ds?.clinicalPearls && ds.clinicalPearls.length > 0 && (
+        <div className="mb-6 p-4 bg-amber-50 rounded-lg border border-amber-200">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Clinical pearls</h3>
+          <ul className="list-disc list-inside space-y-1 text-gray-700">
+            {ds.clinicalPearls.map((line, idx) => (
+              <li key={idx}>
+                <VocabText text={line} viewMode={viewMode} onTermClick={onTermClick} onTermSave={onTermSave} />
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {ds?.vocabToReview && ds.vocabToReview.length > 0 && (
+        <div className="mb-6 p-4 bg-slate-50 rounded-lg border border-slate-200">
+          <h3 className="text-lg font-semibold text-gray-900 mb-2">Vocabulary to review</h3>
+          <p className="text-sm text-gray-700">{ds.vocabToReview.join(', ')}</p>
+        </div>
+      )}
 
       <div className="border-t border-gray-200 pt-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-2">Teaching Points</h3>

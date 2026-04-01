@@ -1,7 +1,6 @@
 'use client'
 
-/** Plain `<a>` only — avoid `next/link` here so this boundary never depends on router chunks. */
-export default function Error({
+export default function ScenarioError({
   error,
   reset,
 }: {
@@ -9,9 +8,11 @@ export default function Error({
   reset: () => void
 }) {
   return (
-    <div className="mx-auto flex min-h-[50vh] max-w-lg flex-col items-center justify-center gap-4 px-4 py-16 text-center">
-      <h2 className="text-xl font-semibold text-gray-900">Something went wrong</h2>
-      <p className="text-sm text-gray-600">{error.message || 'An unexpected error occurred.'}</p>
+    <div className="mx-auto flex min-h-[40vh] max-w-lg flex-col items-center justify-center gap-4 px-4 py-12 text-center">
+      <h2 className="text-xl font-semibold text-gray-900">Scenario failed to load</h2>
+      <p className="text-sm text-gray-600">
+        {error.message || 'Something went wrong while loading this case.'}
+      </p>
       {error.digest ? (
         <p className="text-xs text-gray-400">Reference: {error.digest}</p>
       ) : null}
@@ -23,8 +24,8 @@ export default function Error({
         >
           Try again
         </button>
-        <a href="/" className="text-sm text-primary-600 underline hover:text-primary-800">
-          Home
+        <a href="/scenarios" className="text-sm text-primary-600 underline hover:text-primary-800">
+          All scenarios
         </a>
       </div>
     </div>

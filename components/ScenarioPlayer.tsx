@@ -45,6 +45,16 @@ type AssessmentResult = {
     diagnosis?: number
     communication?: number
   }
+  debriefStructured?: {
+    summary: string
+    strengths: string[]
+    missedOpportunities: string[]
+    diagnosticReasoning: string[]
+    nextStepAdvice: string[]
+    clinicalPearls: string[]
+    vocabToReview: string[]
+  }
+  source?: string
 }
 
 type Props = {
