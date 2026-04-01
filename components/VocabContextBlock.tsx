@@ -2,7 +2,7 @@
 
 import { ReactNode } from 'react'
 
-type SourceType = 'chat' | 'exam' | 'tests' | 'diagnosis' | 'debrief'
+type SourceType = 'chat' | 'exam' | 'tests' | 'diagnosis' | 'debrief' | 'scenario' | 'summary' | 'history'
 
 type Props = {
   children: ReactNode

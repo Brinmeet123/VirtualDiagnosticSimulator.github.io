@@ -1,152 +1,118 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { VocabExplanation } from './vocabEngine'
+import type { MedicalTerm } from '@/src/types/medicalTerm'
+import { getMedicalTermById } from '@/src/lib/medicalTerms'
+import {
+  loadVocabStorage,
+  persistVocabStorage,
+  upsertSavedTerm,
+  removeSavedTerm,
+  toggleMastered,
+  type VocabStorageV2,
+} from '@/src/lib/vocabStorage'
 
-const STORAGE_KEY = 'savedVocab_v1'
-
-type SavedVocabItem = VocabExplanation & {
-  savedAt: number
-  timesReviewed?: number
+export type EnrichedSavedTerm = {
+  saved: import('@/src/types/medicalTerm').SavedVocabTerm
+  term: MedicalTerm | null
 }
 
-type SavedVocabStore = {
-  [normalizedTerm: string]: SavedVocabItem
-}
-
-/**
- * Normalize a term key for consistent storage
- * Rules: trim, collapse spaces, lowercase, strip punctuation (except hyphen)
- */
-function normalizeTermKey(term: string): string {
-  return term
-    .trim()
-    .toLowerCase()
-    .replace(/\s+/g, ' ') // Collapse multiple spaces
-    .replace(/[.,;:!?'"()]/g, '') // Strip punctuation except hyphen
-    .trim()
-}
-
-/**
- * Custom hook for managing saved vocabulary
- */
 export function useVocabStore() {
-  const [store, setStore] = useState<SavedVocabStore>({})
+  const [data, setData] = useState<VocabStorageV2>(() => ({
+    version: 2,
+    saved: [],
+    stats: { totalSaved: 0, mastered: 0 },
+  }))
   const [isLoaded, setIsLoaded] = useState(false)
 
-  // Load from localStorage on mount
   useEffect(() => {
-    try {
-      const stored = localStorage.getItem(STORAGE_KEY)
-      if (stored) {
-        const parsed = JSON.parse(stored)
-        setStore(parsed)
-      }
-      setIsLoaded(true)
-    } catch (error) {
-      console.error('Error loading vocab from localStorage:', error)
-      setIsLoaded(true)
-    }
+    setData(loadVocabStorage())
+    setIsLoaded(true)
   }, [])
 
-  // Save to localStorage whenever store changes
   useEffect(() => {
     if (isLoaded) {
-      try {
-        const serialized = JSON.stringify(store)
-        localStorage.setItem(STORAGE_KEY, serialized)
-        // Debug: log localStorage state after save (can be removed later)
-        const verify = localStorage.getItem(STORAGE_KEY)
-        if (verify) {
-          const parsed = JSON.parse(verify)
-          console.log('localStorage after save:', {
-            keyCount: Object.keys(parsed).length,
-            keys: Object.keys(parsed).slice(0, 5) // First 5 keys for debugging
-          })
-        }
-      } catch (error) {
-        console.error('Error saving vocab to localStorage:', error)
-      }
+      persistVocabStorage(data)
     }
-  }, [store, isLoaded])
+  }, [data, isLoaded])
 
-  /**
-   * Save an explanation to the store
-   */
-  const save = useCallback((explanation: VocabExplanation) => {
-    if (!explanation.term || (!explanation.definitionSimple && !explanation.definitionClinical)) {
-      console.warn('Cannot save: missing term or definitions', explanation)
-      return false
-    }
-
-    const normalizedKey = normalizeTermKey(explanation.term)
-    
-    setStore((prev) => {
-      const existing = prev[normalizedKey]
-      const updated = {
-        ...prev,
-        [normalizedKey]: {
-          ...explanation,
-          savedAt: existing?.savedAt || Date.now(),
-          timesReviewed: existing?.timesReviewed || 0,
-        },
-      }
-      
-      console.log('Saved vocab:', {
-        originalTerm: explanation.term,
-        normalizedKey,
-        storeSize: Object.keys(updated).length
-      })
-      
-      return updated
+  const saveMedicalTerm = useCallback((term: MedicalTerm): boolean => {
+    setData((prev) => {
+      const { data: next } = upsertSavedTerm(prev, term.id)
+      return next
     })
-
     return true
   }, [])
 
-  /**
-   * Remove a term from the store
-   */
-  const remove = useCallback((term: string) => {
-    const normalizedKey = normalizeTermKey(term)
-    setStore((prev) => {
-      const updated = { ...prev }
-      delete updated[normalizedKey]
-      return updated
-    })
+  const hasTermId = useCallback(
+    (termId: string): boolean => {
+      return data.saved.some((s) => s.termId === termId)
+    },
+    [data.saved]
+  )
+
+  const remove = useCallback((savedId: string) => {
+    setData((prev) => removeSavedTerm(prev, savedId))
   }, [])
 
-  /**
-   * Check if a term exists in the store
-   */
-  const has = useCallback((term: string): boolean => {
-    const normalizedKey = normalizeTermKey(term)
-    return normalizedKey in store
-  }, [store])
+  const removeByTermId = useCallback((termId: string) => {
+    setData((prev) => ({
+      ...prev,
+      saved: prev.saved.filter((s) => s.termId !== termId),
+    }))
+  }, [])
 
-  /**
-   * Get all saved terms, sorted by savedAt (newest first)
-   */
-  const list = useCallback((): SavedVocabItem[] => {
-    return Object.values(store).sort((a, b) => b.savedAt - a.savedAt)
-  }, [store])
+  const setMastered = useCallback((savedId: string) => {
+    setData((prev) => toggleMastered(prev, savedId))
+  }, [])
 
-  /**
-   * Get a specific term from the store
-   */
-  const get = useCallback((term: string): SavedVocabItem | undefined => {
-    const normalizedKey = normalizeTermKey(term)
-    return store[normalizedKey]
-  }, [store])
+  const list = useCallback((): EnrichedSavedTerm[] => {
+    return [...data.saved]
+      .sort((a, b) => new Date(b.savedAt).getTime() - new Date(a.savedAt).getTime())
+      .map((saved) => ({
+        saved,
+        term: getMedicalTermById(saved.termId) ?? null,
+      }))
+  }, [data.saved])
+
+  const getByTermId = useCallback(
+    (termId: string) => {
+      return data.saved.find((s) => s.termId === termId)
+    },
+    [data.saved]
+  )
+
+  const updateStats = useCallback((patch: Partial<VocabStorageV2['stats']>) => {
+    setData((prev) => ({
+      ...prev,
+      stats: { ...prev.stats, ...patch },
+    }))
+  }, [])
+
+  const recordQuizComplete = useCallback(() => {
+    setData((prev) => ({
+      ...prev,
+      stats: {
+        ...prev.stats,
+        quizAttempts: (prev.stats.quizAttempts ?? 0) + 1,
+        lastQuizAt: new Date().toISOString(),
+      },
+    }))
+  }, [])
 
   return {
-    save,
+    saveMedicalTerm,
+    hasTermId,
     remove,
-    has,
+    removeByTermId,
+    setMastered,
     list,
-    get,
+    getByTermId,
+    updateStats,
+    recordQuizComplete,
     isLoaded,
-    count: Object.keys(store).length,
+    count: data.saved.length,
+    masteredCount: data.saved.filter((s) => s.mastered).length,
+    stats: data.stats,
   }
 }
-

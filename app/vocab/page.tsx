@@ -1,123 +1,100 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { getVocabTerm } from '@/data/vocab'
 import Link from 'next/link'
 import { useVocabStore } from '@/lib/useVocabStore'
 
 export default function VocabPage() {
-  const { list, remove, count } = useVocabStore()
+  const { list, remove, setMastered, count, masteredCount, stats, isLoaded } = useVocabStore()
   const [searchQuery, setSearchQuery] = useState('')
-  const [selectedTag, setSelectedTag] = useState<string>('All')
+  const [selectedCategory, setSelectedCategory] = useState<string>('All')
   const [viewMode, setViewMode] = useState<'simple' | 'clinical'>('simple')
 
-  // Get saved terms from store
   const savedItems = list()
-  
-  // Match saved items with vocab dictionary entries where possible
-  const savedTermsWithVocab = useMemo(() => {
-    return savedItems.map(item => {
-      const vocabEntry = getVocabTerm(item.term)
-      return {
-        ...item,
-        vocabEntry, // Optional: reference to vocab.ts entry if found
-        display: vocabEntry?.display || item.term,
-        tags: vocabEntry?.tags || []
-      }
-    })
-  }, [savedItems])
 
   const filteredTerms = useMemo(() => {
-    return savedTermsWithVocab.filter(item => {
-      const searchMatch = searchQuery === '' ||
-        item.term.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.display.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.definitionSimple.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.definitionClinical.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.tags.some(tag => tag.toLowerCase().includes(searchQuery.toLowerCase()))
-      
-      const tagMatch = selectedTag === 'All' || item.tags.includes(selectedTag)
-      
+    return savedItems.filter(({ saved, term }) => {
+      const label = term?.term ?? saved.termId
+      const defShort = term?.shortDefinition ?? ''
+      const defLong = term?.definition ?? ''
+      const cat = term?.category ?? ''
+
+      const searchMatch =
+        searchQuery === '' ||
+        label.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        defShort.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        defLong.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        cat.toLowerCase().includes(searchQuery.toLowerCase())
+
+      const tagMatch = selectedCategory === 'All' || cat === selectedCategory
+
       return searchMatch && tagMatch
     })
-  }, [savedTermsWithVocab, searchQuery, selectedTag])
+  }, [savedItems, searchQuery, selectedCategory])
 
-  const allTags = useMemo(() => {
-    const tags = new Set<string>()
-    savedTermsWithVocab.forEach(item => {
-      item.tags.forEach(tag => tags.add(tag))
+  const categories = useMemo(() => {
+    const s = new Set<string>()
+    savedItems.forEach(({ term }) => {
+      if (term?.category) s.add(term.category)
     })
-    return Array.from(tags).sort()
-  }, [savedTermsWithVocab])
-
-  const stats = useMemo(() => {
-    const saved = count
-    const mastered = savedItems.filter(v => (v.timesReviewed || 0) > 0 && (v.timesReviewed || 0) >= 5).length
-    return { saved, mastered }
-  }, [count, savedItems])
-
-  const handleRemoveTerm = (term: string) => {
-    remove(term)
-  }
+    return Array.from(s).sort()
+  }, [savedItems])
 
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-6">
         <h1 className="text-3xl font-bold text-gray-900 mb-2">My Vocabulary</h1>
-        <p className="text-gray-600">Review and practice the medical terms you've saved.</p>
+        <p className="text-gray-600">Terms you saved from scenarios — stored on this device only.</p>
       </div>
 
-      {/* Stats */}
       <div className="grid md:grid-cols-3 gap-4 mb-6">
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-          <p className="text-sm text-blue-700 mb-1">Saved Terms</p>
-          <p className="text-3xl font-bold text-blue-900">{stats.saved}</p>
+          <p className="text-sm text-blue-700 mb-1">Saved terms</p>
+          <p className="text-3xl font-bold text-blue-900">{isLoaded ? count : '—'}</p>
         </div>
         <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-          <p className="text-sm text-green-700 mb-1">Mastered</p>
-          <p className="text-3xl font-bold text-green-900">{stats.mastered}</p>
+          <p className="text-sm text-green-700 mb-1">Marked mastered</p>
+          <p className="text-3xl font-bold text-green-900">{isLoaded ? masteredCount : '—'}</p>
         </div>
         <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
-          <Link
-            href="/vocab/quiz"
-            className="block text-center"
-          >
+          <Link href="/vocab/quiz" className="block text-center">
             <p className="text-sm text-purple-700 mb-1">Practice</p>
-            <p className="text-lg font-bold text-purple-900">Take Quiz →</p>
+            <p className="text-lg font-bold text-purple-900">Take quiz →</p>
           </Link>
         </div>
       </div>
 
-      {/* Controls */}
+      {stats?.quizAttempts != null && stats.quizAttempts > 0 && (
+        <p className="text-sm text-gray-500 mb-4">Quiz attempts (this device): {stats.quizAttempts}</p>
+      )}
+
       <div className="mb-6 space-y-4">
         <div className="flex flex-col sm:flex-row gap-4">
           <input
             type="text"
-            placeholder="Search terms..."
+            placeholder="Search saved terms…"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
           />
-          
+
           <div className="flex items-center gap-2">
             <span className="text-sm font-medium text-gray-700">View:</span>
             <div className="flex bg-gray-100 rounded-md p-1">
               <button
+                type="button"
                 onClick={() => setViewMode('simple')}
                 className={`px-3 py-1 text-sm font-medium rounded transition ${
-                  viewMode === 'simple'
-                    ? 'bg-white text-primary-600 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
+                  viewMode === 'simple' ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
                 Simple
               </button>
               <button
+                type="button"
                 onClick={() => setViewMode('clinical')}
                 className={`px-3 py-1 text-sm font-medium rounded transition ${
-                  viewMode === 'clinical'
-                    ? 'bg-white text-primary-600 shadow-sm'
-                    : 'text-gray-600 hover:text-gray-900'
+                  viewMode === 'clinical' ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'
                 }`}
               >
                 Clinical
@@ -126,26 +103,24 @@ export default function VocabPage() {
           </div>
         </div>
 
-        {allTags.length > 0 && (
+        {categories.length > 0 && (
           <div className="flex flex-wrap gap-2">
             <button
-              onClick={() => setSelectedTag('All')}
+              type="button"
+              onClick={() => setSelectedCategory('All')}
               className={`px-3 py-1 rounded-md text-sm transition ${
-                selectedTag === 'All'
-                  ? 'bg-primary-600 text-white'
-                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                selectedCategory === 'All' ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
               }`}
             >
-              All
+              All categories
             </button>
-            {allTags.map(tag => (
+            {categories.map((tag) => (
               <button
                 key={tag}
-                onClick={() => setSelectedTag(tag)}
+                type="button"
+                onClick={() => setSelectedCategory(tag)}
                 className={`px-3 py-1 rounded-md text-sm transition ${
-                  selectedTag === tag
-                    ? 'bg-primary-600 text-white'
-                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  selectedCategory === tag ? 'bg-primary-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
                 {tag}
@@ -155,14 +130,13 @@ export default function VocabPage() {
         )}
       </div>
 
-      {/* Terms List */}
       {filteredTerms.length === 0 ? (
         <div className="bg-white rounded-lg shadow-md p-12 text-center">
-          {savedTermsWithVocab.length === 0 ? (
+          {savedItems.length === 0 ? (
             <>
-              <p className="text-gray-600 mb-4">You haven't saved any terms yet.</p>
+              <p className="text-gray-600 mb-4">You have not saved any terms yet.</p>
               <p className="text-sm text-gray-500">
-                Highlight any word or phrase in a scenario and click "Save to Vocab" to add it here!
+                Highlight a word or phrase in a scenario and tap <strong>Save to Vocab</strong>.
               </p>
             </>
           ) : (
@@ -171,90 +145,59 @@ export default function VocabPage() {
         </div>
       ) : (
         <div className="grid md:grid-cols-2 gap-4">
-          {filteredTerms.map(item => {
-            const mastery = (item.timesReviewed || 0) > 0 ? Math.min(100, ((item.timesReviewed || 0) / 5) * 100) : 0
-            
+          {filteredTerms.map(({ saved, term }) => {
+            const title = term?.term ?? saved.termId
+            const definition =
+              term != null
+                ? viewMode === 'simple'
+                  ? term.shortDefinition
+                  : term.definition
+                : 'Definition not found — term may have been removed from the local dictionary.'
+
             return (
-              <div
-                key={item.term}
-                className="bg-white rounded-lg shadow-md p-4 border border-gray-200"
-              >
-                <div className="flex justify-between items-start mb-2">
-                  <h3 className="text-lg font-bold text-primary-900">{item.display}</h3>
+              <div key={saved.id} className="bg-white rounded-lg shadow-md p-4 border border-gray-200">
+                <div className="flex justify-between items-start mb-2 gap-2">
+                  <div>
+                    <h3 className="text-lg font-bold text-primary-900">{title}</h3>
+                    {term && (
+                      <p className="text-xs font-medium text-primary-600 mt-0.5">{term.category}</p>
+                    )}
+                  </div>
                   <button
-                    onClick={() => handleRemoveTerm(item.term)}
-                    className="text-gray-400 hover:text-red-600 transition"
-                    title="Remove from saved"
+                    type="button"
+                    onClick={() => remove(saved.id)}
+                    className="text-gray-400 hover:text-red-600 transition shrink-0"
+                    title="Remove"
                   >
                     ×
                   </button>
                 </div>
-                
-                <div className="mb-3">
-                  <p className="text-sm text-gray-700 mb-2">
-                    <strong>Definition:</strong> {
-                      viewMode === 'simple' 
-                        ? item.definitionSimple 
-                        : item.definitionClinical
-                    }
-                  </p>
-                  {item.whyItMatters && (
-                    <p className="text-sm text-gray-700 mb-2">
-                      <strong>Why it matters:</strong> {item.whyItMatters}
-                    </p>
-                  )}
-                  {item.example && (
-                    <p className="text-xs text-gray-600 italic">
-                      Example: {item.example}
-                    </p>
-                  )}
-                </div>
-                
-                {(item.timesReviewed || 0) > 0 && (
-                  <div className="mb-3 p-2 bg-gray-50 rounded">
-                    <div className="flex justify-between items-center mb-1">
-                      <span className="text-xs text-gray-600">Reviewed</span>
-                      <span className="text-xs font-medium text-gray-700">
-                        {item.timesReviewed} times
-                      </span>
-                    </div>
-                    {mastery > 0 && (
-                      <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
-                        <div
-                          className={`h-2 rounded-full ${
-                            mastery >= 80 ? 'bg-green-500' :
-                            mastery >= 60 ? 'bg-yellow-500' :
-                            'bg-red-500'
-                          }`}
-                          style={{ width: `${mastery}%` }}
-                        />
-                      </div>
-                    )}
-                  </div>
-                )}
-                
-                <div className="flex gap-2">
+
+                <p className="text-sm text-gray-700 mb-3">{definition}</p>
+
+                <div className="flex flex-wrap gap-2 items-center">
+                  <button
+                    type="button"
+                    onClick={() => setMastered(saved.id)}
+                    className={`px-3 py-1.5 rounded-md text-sm font-medium transition ${
+                      saved.mastered ? 'bg-green-100 text-green-800 border border-green-300' : 'bg-gray-100 text-gray-700 border border-gray-200'
+                    }`}
+                  >
+                    {saved.mastered ? '✓ Mastered' : 'Mark mastered'}
+                  </button>
                   <Link
                     href="/vocab/quiz"
-                    className="flex-1 px-3 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition text-sm font-medium text-center"
+                    className="px-3 py-1.5 rounded-md text-sm font-medium bg-primary-600 text-white hover:bg-primary-700 transition"
                   >
                     Practice
                   </Link>
                 </div>
-                
-                {item.tags.length > 0 && (
-                  <div className="mt-2 pt-2 border-t border-gray-200">
-                    <div className="flex flex-wrap gap-1">
-                      {item.tags.map(tag => (
-                        <span
-                          key={tag}
-                          className="px-2 py-0.5 bg-gray-100 text-gray-600 text-xs rounded"
-                        >
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
+
+                {term && term.relatedTerms.length > 0 && (
+                  <p className="text-xs text-gray-500 mt-3 pt-3 border-t border-gray-100">
+                    <span className="font-medium text-gray-600">Related: </span>
+                    {term.relatedTerms.join(', ')}
+                  </p>
                 )}
               </div>
             )
@@ -264,4 +207,3 @@ export default function VocabPage() {
     </div>
   )
 }
-

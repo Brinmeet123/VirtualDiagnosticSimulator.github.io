@@ -423,8 +423,9 @@ export default function ScenarioPlayer({ scenario }: Props) {
       )}
 
       {activeSection === 'exam' && (
-        <PhysicalExamPanel 
-          sections={scenario.physicalExam} 
+        <PhysicalExamPanel
+          sections={scenario.physicalExam}
+          scenarioId={scenario.id}
           viewedSections={viewedExamSections}
           onSectionsViewed={handleExamSectionsViewed}
           viewMode={viewMode}

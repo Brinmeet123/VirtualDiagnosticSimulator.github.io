@@ -3,11 +3,13 @@
 import { useState, useEffect } from 'react'
 import { PhysicalExamSection } from '@/data/scenarios'
 import VocabText from './VocabText'
+import VocabContextBlock from './VocabContextBlock'
 
 type ViewMode = 'simple' | 'clinical'
 
 type Props = {
   sections: PhysicalExamSection[]
+  scenarioId?: string
   viewedSections?: string[]
   onSectionsViewed: (sectionIds: string[]) => void
   viewMode?: ViewMode
@@ -15,7 +17,7 @@ type Props = {
   onTermSave?: (term: string) => void
 }
 
-export default function PhysicalExamPanel({ sections, viewedSections: initialViewedSections = [], onSectionsViewed, viewMode = 'simple', onTermClick, onTermSave }: Props) {
+export default function PhysicalExamPanel({ sections, scenarioId, viewedSections: initialViewedSections = [], onSectionsViewed, viewMode = 'simple', onTermClick, onTermSave }: Props) {
   const [viewedSections, setViewedSections] = useState<Set<string>>(new Set(initialViewedSections))
   const [expandedSection, setExpandedSection] = useState<string | null>(null)
 
@@ -32,9 +34,12 @@ export default function PhysicalExamPanel({ sections, viewedSections: initialVie
     onSectionsViewed(Array.from(newViewed))
   }
 
+  const examContextText = sections.map((s) => `${s.summary}\n${s.details}`).join('\n')
+
   return (
     <div className="bg-white rounded-lg shadow-md p-6 mb-6">
       <h2 className="text-lg font-semibold text-gray-900 mb-4">Physical Examination</h2>
+      <VocabContextBlock source="exam" scenarioId={scenarioId} text={examContextText}>
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
         {sections.map((section) => {
           const isViewed = viewedSections.has(section.id)
@@ -81,6 +86,7 @@ export default function PhysicalExamPanel({ sections, viewedSections: initialVie
           )
         })}
       </div>
+      </VocabContextBlock>
     </div>
   )
 }

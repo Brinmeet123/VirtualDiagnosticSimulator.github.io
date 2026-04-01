@@ -1,30 +1,24 @@
 /** @type {import('next').NextConfig} */
-// Never use static export / odd basePath during `next dev` — breaks dev overlay ("missing required error components").
-// Use NODE_ENV !== 'production' so unset NODE_ENV still counts as dev (avoids accidentally applying export in dev).
-const isDev = process.env.NODE_ENV !== 'production'
+// `next dev` must not use static-export / GitHub basePath — wrong combo breaks dev + chunk loading.
+// argv check: survives a stray NODE_ENV=production while running `next dev`.
+const isDevServer =
+  process.argv.includes('dev') ||
+  (process.env.NODE_ENV !== 'production' && !process.argv.includes('build'))
 
-const nextConfig = {
+module.exports = {
   reactStrictMode: true,
-  webpack: (config, { dev, isServer }) => {
-    // Used for `next build` and `npm run dev` (webpack). `npm run dev:turbo` skips this.
-    // Dev (webpack): slow first compile can exceed default chunk load timeout in the browser.
-    if (dev && !isServer) {
-      config.output = config.output || {}
-      config.output.chunkLoadTimeout = 300000
-    }
-    return config
-  },
-  output: isDev
+  // Intentionally no custom webpack() — mutating config.output has been associated with
+  // flaky chunk IDs and "Cannot find module './NNN.js'" when .next is partially stale.
+  output: isDevServer
     ? undefined
     : process.env.NEXT_OUTPUT === 'standalone'
       ? 'standalone'
       : process.env.NEXT_OUTPUT === 'export'
         ? 'export'
         : undefined,
-  // GitHub Pages: project repos are served at USER.github.io/REPO/ — set basePath
   ...(function () {
     const ghExport =
-      !isDev &&
+      !isDevServer &&
       process.env.NEXT_OUTPUT === 'export' &&
       String(process.env.GITHUB_PAGES) === 'true'
     const base =
@@ -32,10 +26,11 @@ const nextConfig = {
         ? process.env.GITHUB_PAGES_BASEPATH
         : ''
     return ghExport
-      ? { basePath: base, assetPrefix: base }
+      ? {
+          basePath: base,
+          assetPrefix: base,
+          trailingSlash: true,
+        }
       : { basePath: '', assetPrefix: '' }
   })(),
 }
-
-module.exports = nextConfig
-

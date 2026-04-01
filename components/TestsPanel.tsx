@@ -5,6 +5,7 @@ import { Scenario } from '@/data/scenarios'
 import { testCatalog, TestCategory, TestKind } from '@/data/testCatalog'
 import { resolveTest } from '@/lib/testEngine'
 import VocabText from './VocabText'
+import VocabContextBlock from './VocabContextBlock'
 
 type ViewMode = 'simple' | 'clinical'
 
@@ -41,6 +42,12 @@ export default function TestsPanel({ scenario, orderedTests: initialOrderedTests
     'Endocrine', 'Infectious', 'Hematology', 'MSK', 'Imaging', 'Other'
   ]
 
+  const testsVocabText = useMemo(() => {
+    const lines: string[] = []
+    orderedTests.forEach((o) => lines.push(o.result))
+    return lines.join('\n')
+  }, [orderedTests])
+
   const filteredTests = useMemo(() => {
     return testCatalog.filter(test => {
       const categoryMatch = selectedCategory === 'All' || test.category === selectedCategory
@@ -71,6 +78,7 @@ export default function TestsPanel({ scenario, orderedTests: initialOrderedTests
     <div className="bg-white rounded-lg shadow-md p-6 mb-6">
       <h2 className="text-lg font-semibold text-gray-900 mb-4">Diagnostic Tests</h2>
 
+      <VocabContextBlock source="tests" scenarioId={scenario.id} text={testsVocabText}>
       <div className="flex flex-col lg:flex-row gap-4">
         {/* Category Sidebar */}
         <div className="lg:w-48 flex-shrink-0">
@@ -220,6 +228,7 @@ export default function TestsPanel({ scenario, orderedTests: initialOrderedTests
           )}
         </div>
       </div>
+      </VocabContextBlock>
     </div>
   )
 }

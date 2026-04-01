@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { Scenario } from '@/data/scenarios'
 import { getMockPatientResponse } from '@/lib/mockResponses'
 import VocabText from './VocabText'
+import VocabContextBlock from './VocabContextBlock'
 
 type Message = {
   role: 'doctor' | 'patient'
@@ -197,6 +198,11 @@ export default function ChatPanel({ scenario, messages: initialMessages, onChatU
   return (
     <div className="bg-white rounded-lg shadow-md p-6 flex flex-col h-full">
       <h2 className="text-lg font-semibold text-gray-900 mb-4">History & Interview</h2>
+      <VocabContextBlock
+        source="chat"
+        scenarioId={scenario.id}
+        text={messages.map((m) => m.content).join('\n')}
+      >
       <div className="flex-1 overflow-y-auto mb-4 space-y-4 pr-2">
         {messages.map((msg, idx) => (
           <div
@@ -237,6 +243,7 @@ export default function ChatPanel({ scenario, messages: initialMessages, onChatU
         )}
         <div ref={messagesEndRef} />
       </div>
+      </VocabContextBlock>
       <form onSubmit={handleSubmit} className="flex gap-2">
         <input
           id="chat-input"

@@ -1,7 +1,9 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { vocab, VocabTerm, findVocabTerms } from '@/data/vocab'
+import { vocab, VocabTerm } from '@/data/vocab'
+import { lookupMedicalTerm } from '@/src/lib/medicalTerms'
+import { useVocabStore } from '@/lib/useVocabStore'
 
 type ViewMode = 'simple' | 'clinical'
 
@@ -21,32 +23,37 @@ type VocabMatch = {
 export default function VocabText({ text, viewMode = 'simple', onTermClick, onTermSave }: Props) {
   const [selectedTerm, setSelectedTerm] = useState<VocabTerm | null>(null)
   const [popoverPosition, setPopoverPosition] = useState<{ x: number; y: number } | null>(null)
+  const { saveMedicalTerm } = useVocabStore()
 
-  // Find all vocab terms in the text
+  // Find all vocab terms in the text (prefer longer multi-word matches first)
   const matches = useMemo(() => {
     const found: VocabMatch[] = []
     const lowerText = text.toLowerCase()
+    const ordered = [...vocab].sort((a, b) => b.term.length - a.term.length)
 
-    vocab.forEach(term => {
+    ordered.forEach(term => {
       const termLower = term.term.toLowerCase()
-      const regex = new RegExp(`\\b${termLower}\\b`, 'gi')
+      const escaped = termLower.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      const regex = new RegExp(`(?:^|[^\\p{L}\\p{N}])(${escaped})(?=[^\\p{L}\\p{N}]|$)`, 'giu')
       let match
 
       while ((match = regex.exec(lowerText)) !== null) {
-        // Check if this match overlaps with an existing match (prefer longer terms)
-        const start = match.index
-        const end = start + termLower.length
-        const overlaps = found.some(m => 
-          (start >= m.startIndex && start < m.endIndex) ||
-          (end > m.startIndex && end <= m.endIndex) ||
-          (start <= m.startIndex && end >= m.endIndex)
+        const g1 = match[1]
+        if (!g1) continue
+        const start = match.index + match[0].indexOf(g1)
+        const end = start + g1.length
+        const overlaps = found.some(
+          (m) =>
+            (start >= m.startIndex && start < m.endIndex) ||
+            (end > m.startIndex && end <= m.endIndex) ||
+            (start <= m.startIndex && end >= m.endIndex)
         )
 
         if (!overlaps) {
           found.push({
             term,
-            startIndex: match.index,
-            endIndex: match.index + termLower.length
+            startIndex: start,
+            endIndex: end,
           })
         }
       }
@@ -76,22 +83,10 @@ export default function VocabText({ text, viewMode = 'simple', onTermClick, onTe
     if (selectedTerm && onTermSave) {
       onTermSave(selectedTerm.term)
     }
-    
-    // Save to localStorage
     if (selectedTerm) {
-      const saved = localStorage.getItem('savedVocab')
-      const savedVocab: Record<string, { savedAt: number; correct: number; attempts: number }> = saved ? JSON.parse(saved) : {}
-      
-      if (!savedVocab[selectedTerm.term]) {
-        savedVocab[selectedTerm.term] = {
-          savedAt: Date.now(),
-          correct: 0,
-          attempts: 0
-        }
-        localStorage.setItem('savedVocab', JSON.stringify(savedVocab))
-      }
+      const m = lookupMedicalTerm(selectedTerm.term)
+      if (m) saveMedicalTerm(m)
     }
-    
     setSelectedTerm(null)
     setPopoverPosition(null)
   }

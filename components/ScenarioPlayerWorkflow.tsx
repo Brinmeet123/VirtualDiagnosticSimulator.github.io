@@ -17,6 +17,7 @@ import DiagnosisPanel from './DiagnosisPanel'
 import PatientCommunication from './PatientCommunication'
 import PlanDisposition from './PlanDisposition'
 import SummaryPanel from './SummaryPanel'
+import VocabContextBlock from './VocabContextBlock'
 
 type Message = {
   role: 'doctor' | 'patient'
@@ -227,8 +228,14 @@ export default function ScenarioPlayerWorkflow({ scenario }: { scenario: Scenari
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">{scenario.title}</h1>
-        <p className="text-gray-600">{scenario.description}</p>
+        <VocabContextBlock
+          source="scenario"
+          scenarioId={scenario.id}
+          text={`${scenario.title}\n${scenario.description}\n${chiefComplaint}`}
+        >
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">{scenario.title}</h1>
+          <p className="text-gray-600">{scenario.description}</p>
+        </VocabContextBlock>
       </div>
 
       <div className="mb-6">
@@ -325,7 +332,8 @@ export default function ScenarioPlayerWorkflow({ scenario }: { scenario: Scenari
       {currentStep === 'exam' && (
         <>
           <PhysicalExamPanel 
-            sections={scenario.physicalExam} 
+            sections={scenario.physicalExam}
+            scenarioId={scenario.id}
             onSectionsViewed={(sections) => {
               setViewedExamSections(sections)
               if (sections.length >= 2) {

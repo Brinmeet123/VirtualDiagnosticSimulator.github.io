@@ -2,6 +2,7 @@
 
 import { Scenario } from '@/data/scenarios'
 import VocabText from './VocabText'
+import VocabContextBlock from './VocabContextBlock'
 import { vocab, getVocabTerm } from '@/data/vocab'
 
 type ViewMode = 'simple' | 'clinical'
@@ -97,8 +98,12 @@ export default function SummaryPanel({ scenario, assessment, viewMode = 'simple'
     .slice(0, 5)
     .map(term => term.term)
 
+  const debriefContext =
+    `${assessment.summary}\n${assessment.strengths.join('\n')}\n${assessment.areasForImprovement.join('\n')}\n${assessment.diagnosisFeedback}\n${assessment.testSelectionFeedback}\n${scenario.teachingPoints.join('\n')}`
+
   return (
     <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+      <VocabContextBlock source="debrief" scenarioId={scenario.id} text={debriefContext}>
       <h2 className="text-2xl font-bold text-gray-900 mb-6">Assessment & Debrief</h2>
       
       {/* Badges Section */}
@@ -261,6 +266,7 @@ export default function SummaryPanel({ scenario, assessment, viewMode = 'simple'
           ))}
         </ul>
       </div>
+      </VocabContextBlock>
     </div>
   )
 }

@@ -10,14 +10,13 @@ export async function generateStaticParams() {
 }
 
 type Props = {
-  params: Promise<{
-    id: string
-  }>
+  /** Next 14: object. Next 15+: Promise — normalize with Promise.resolve. */
+  params: { id: string } | Promise<{ id: string }>
 }
 
 export default async function ScenarioPage({ params }: Props) {
-  const { id } = await params
-  const scenario = scenarios.find(s => s.id === id)
+  const { id } = await Promise.resolve(params)
+  const scenario = scenarios.find((s) => s.id === id)
 
   if (!scenario) {
     notFound()
