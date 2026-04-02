@@ -14,7 +14,7 @@ function registerErrorResponse(e: unknown): { error: string; status: number } {
   if (e instanceof PrismaClientInitializationError) {
     return {
       error:
-        'Database is not reachable. Set DATABASE_URL in .env.local (use file:./dev.db — relative to the prisma folder), then run: npx prisma migrate dev',
+        'Database is not reachable. Set DATABASE_URL to a PostgreSQL connection string (Vercel: Project → Settings → Environment Variables). Use Neon or Vercel Postgres, then redeploy.',
       status: 503,
     }
   }
@@ -37,7 +37,7 @@ function registerErrorResponse(e: unknown): { error: string; status: number } {
     if (m.includes('DATABASE_URL') || m.includes('Environment variable not found')) {
       return {
         error:
-          'DATABASE_URL is missing. Add DATABASE_URL="file:./dev.db" to .env.local, then run: npx prisma migrate dev',
+          'DATABASE_URL is missing. Add a PostgreSQL URL in .env.local (local) or Vercel env vars (production).',
         status: 503,
       }
     }

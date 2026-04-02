@@ -50,7 +50,6 @@ jobs:
           build-args: |
             NEXT_TELEMETRY_DISABLED=1
             AUTH_SECRET=build-time-placeholder-change-in-deployment-min-32-chars
-            DATABASE_URL=file:./prisma/dev.db
 
       - name: Build notice
         if: steps.check-docker.outputs.secrets_available == 'false'

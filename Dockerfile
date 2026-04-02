@@ -21,14 +21,13 @@ RUN mkdir -p public
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
 ENV NEXT_OUTPUT=standalone
-# Auth.js + Prisma: allow CI/Docker build-args to override defaults
+# Auth.js + Prisma: image build does not run DB migrations (no DB in build context).
+# Run `prisma migrate deploy` at deploy time with DATABASE_URL set, or use Vercel `npm run build`.
 ARG AUTH_SECRET=build-time-placeholder-change-in-deployment-min-32-chars
-ARG DATABASE_URL=file:./prisma/dev.db
 ENV AUTH_SECRET=$AUTH_SECRET
-ENV DATABASE_URL=$DATABASE_URL
 
 # Build (standalone output relies on NEXT_OUTPUT environment variable)
-RUN npm run build
+RUN npm run build:next
 
 
 FROM node:20-alpine AS runner
