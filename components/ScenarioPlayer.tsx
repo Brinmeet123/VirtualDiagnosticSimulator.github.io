@@ -1,7 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSession } from 'next-auth/react'
 import { Scenario } from '@/data/scenarios'
+import type { RubricBreakdown } from '@/lib/scoring'
 import { getMockAssessment } from '@/lib/mockResponses'
 import DoctorPatientScene from './DoctorPatientScene'
 import ChatPanel from './ChatPanel'
@@ -61,6 +63,13 @@ type Props = {
   scenario: Scenario
 }
 
+type ScenarioScoreState = {
+  score: number
+  level: string
+  feedback: string
+  rubric: RubricBreakdown
+}
+
 type OrderedTestData = {
   testId: string
   result: string
@@ -73,7 +82,20 @@ type DifferentialItem = {
   note?: string
 }
 
+type PersistedState = {
+  viewedExamSections: string[]
+  orderedTests: [string, OrderedTestData][]
+  differential: DifferentialItem[]
+  finalDiagnosisId: string | null
+  activeSection: ClinicalSection
+  learningMode: LearningMode
+  viewMode: ViewMode
+}
+
 export default function ScenarioPlayer({ scenario }: Props) {
+  const { data: session, status: sessionStatus } = useSession()
+  const [attemptId, setAttemptId] = useState<string | null>(null)
+  const [scenarioScore, setScenarioScore] = useState<ScenarioScoreState | null>(null)
   const [activeSection, setActiveSection] = useState<ClinicalSection>('history')
   const [learningMode, setLearningMode] = useState<LearningMode>('guided')
   const [viewMode, setViewMode] = useState<ViewMode>('simple')
@@ -103,6 +125,87 @@ export default function ScenarioPlayer({ scenario }: Props) {
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
+
+  // Start or resume tracked attempt (signed-in users)
+  useEffect(() => {
+    if (sessionStatus !== 'authenticated' || !session?.user?.id) return
+    let cancelled = false
+    ;(async () => {
+      try {
+        const res = await fetch('/api/scenario/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ scenarioId: scenario.id }),
+        })
+        if (!res.ok || cancelled) return
+        const data = (await res.json()) as {
+          attemptId: string
+          resume: boolean
+          messages: Message[] | null
+          state: PersistedState | null
+        }
+        if (cancelled) return
+        setAttemptId(data.attemptId)
+        if (data.resume && data.messages && data.messages.length > 0) {
+          setChatMessages(data.messages)
+          if (data.state && typeof data.state === 'object') {
+            const st = data.state
+            if (Array.isArray(st.viewedExamSections)) setViewedExamSections(st.viewedExamSections)
+            if (Array.isArray(st.orderedTests)) setOrderedTests(new Map(st.orderedTests))
+            if (Array.isArray(st.differential)) setDifferential(st.differential)
+            if (st.finalDiagnosisId !== undefined) setFinalDiagnosisId(st.finalDiagnosisId)
+            if (st.activeSection) setActiveSection(st.activeSection)
+            if (st.learningMode) setLearningMode(st.learningMode)
+            if (st.viewMode) setViewMode(st.viewMode)
+          }
+        }
+      } catch (e) {
+        console.error('scenario start', e)
+      }
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [sessionStatus, session?.user?.id, scenario.id])
+
+  // Persist messages + UI state for resume
+  useEffect(() => {
+    if (sessionStatus !== 'authenticated' || !attemptId) return
+    const t = setTimeout(() => {
+      const state: PersistedState = {
+        viewedExamSections,
+        orderedTests: Array.from(orderedTests.entries()),
+        differential,
+        finalDiagnosisId,
+        activeSection,
+        learningMode,
+        viewMode,
+      }
+      void fetch('/api/scenario/attempt', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          attemptId,
+          scenarioId: scenario.id,
+          messages: chatMessages,
+          state,
+        }),
+      })
+    }, 1500)
+    return () => clearTimeout(t)
+  }, [
+    chatMessages,
+    viewedExamSections,
+    orderedTests,
+    differential,
+    finalDiagnosisId,
+    activeSection,
+    learningMode,
+    viewMode,
+    attemptId,
+    scenario.id,
+    sessionStatus,
+  ])
 
 
   const handleChatUpdate = (messages: Message[]) => {
@@ -152,6 +255,62 @@ export default function ScenarioPlayer({ scenario }: Props) {
     setIsLoadingAssessment(true)
     setActiveSection('debrief')
 
+    const completeScoring = async (aid: string | null) => {
+      if (sessionStatus !== 'authenticated' || !aid) return
+      try {
+        const cr = await fetch('/api/scenario/complete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            scenarioId: scenario.id,
+            attemptId: aid,
+            messages: chatMessages,
+            finalDxId: finalDiagnosisId,
+            viewedExamSections,
+            orderedTests: Array.from(orderedTests.keys()),
+            differential,
+          }),
+        })
+        if (cr.ok) {
+          const scoreJson = (await cr.json()) as {
+            error?: string
+            score: number
+            level: string
+            feedback: string
+            rubric: RubricBreakdown
+          }
+          if (!scoreJson.error) {
+            setScenarioScore({
+              score: scoreJson.score,
+              level: scoreJson.level,
+              feedback: scoreJson.feedback,
+              rubric: scoreJson.rubric,
+            })
+          }
+        }
+      } catch (e) {
+        console.error('scenario complete scoring', e)
+      }
+    }
+
+    let effectiveAttemptId = attemptId
+    if (sessionStatus === 'authenticated' && !effectiveAttemptId) {
+      try {
+        const sr = await fetch('/api/scenario/start', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ scenarioId: scenario.id }),
+        })
+        if (sr.ok) {
+          const d = (await sr.json()) as { attemptId: string }
+          effectiveAttemptId = d.attemptId
+          setAttemptId(d.attemptId)
+        }
+      } catch (e) {
+        console.error('scenario start before complete', e)
+      }
+    }
+
     try {
       const response = await fetch('/api/assess', {
         method: 'POST',
@@ -172,6 +331,7 @@ export default function ScenarioPlayer({ scenario }: Props) {
 
       if (!response.ok) {
         setAssessment(getMockAssessment() as AssessmentResult)
+        await completeScoring(effectiveAttemptId)
         return
       }
 
@@ -183,12 +343,14 @@ export default function ScenarioPlayer({ scenario }: Props) {
       }
       
       setAssessment(result)
+      await completeScoring(effectiveAttemptId)
     } catch (error: any) {
       console.error('Error:', error)
       const errorMessage = error?.message || 'Unknown error occurred'
       const isNetworkError = errorMessage.includes('Failed to fetch') || errorMessage.includes('Load failed')
       if (isNetworkError) {
         setAssessment(getMockAssessment() as AssessmentResult)
+        await completeScoring(effectiveAttemptId)
         return
       }
 
@@ -202,6 +364,7 @@ export default function ScenarioPlayer({ scenario }: Props) {
         missedKeyHistoryPoints: [],
         testSelectionFeedback: '',
       })
+      await completeScoring(effectiveAttemptId)
     } finally {
       setIsLoadingAssessment(false)
     }
@@ -484,6 +647,7 @@ export default function ScenarioPlayer({ scenario }: Props) {
               savedTerms={savedTerms}
               onTermClick={handleTermClick}
               onTermSave={handleTermSave}
+              scenarioScore={scenarioScore ?? undefined}
             />
           ) : (
             <div className="bg-white rounded-lg shadow-md p-12 text-center">

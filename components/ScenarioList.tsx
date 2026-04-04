@@ -4,11 +4,17 @@ import { useState, useMemo } from 'react'
 import { Scenario, ScenarioDifficulty } from '@/data/scenarios'
 import ScenarioCard from './ScenarioCard'
 
-type Props = {
-  scenarios: Scenario[]
+export type ScenarioProgressInfo = {
+  status: string
+  bestScore: number | null
 }
 
-export default function ScenarioList({ scenarios }: Props) {
+type Props = {
+  scenarios: Scenario[]
+  progressByScenario?: Record<string, ScenarioProgressInfo>
+}
+
+export default function ScenarioList({ scenarios, progressByScenario = {} }: Props) {
   const [selectedSpecialty, setSelectedSpecialty] = useState<string>('all')
   const [selectedDifficulty, setSelectedDifficulty] = useState<ScenarioDifficulty | 'all'>('all')
 
@@ -78,7 +84,11 @@ export default function ScenarioList({ scenarios }: Props) {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredScenarios.map(scenario => (
-            <ScenarioCard key={scenario.id} scenario={scenario} />
+            <ScenarioCard
+              key={scenario.id}
+              scenario={scenario}
+              progress={progressByScenario[scenario.id]}
+            />
           ))}
         </div>
       )}

@@ -21,6 +21,7 @@ model User {
 
   vocab    Vocab[]
   progress ScenarioProgress[]
+  attempts ScenarioAttempt[]
 }
 
 model Vocab {
@@ -35,15 +36,36 @@ model Vocab {
   @@unique([userId, term])
 }
 
-model ScenarioProgress {
+model ScenarioAttempt {
   id         String   @id @default(cuid())
-  scenarioId String
-  score      Int
-  status     String
   userId     String
+  scenarioId String
+  score      Int?
+  feedback   String?
+  rubric     Json?
+  status     String
+  messages   Json?
+  state      Json?
+  createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activeForProgress ScenarioProgress?
+
+  @@index([userId, scenarioId])
+}
+
+model ScenarioProgress {
+  id              String   @id @default(cuid())
+  scenarioId      String
+  score           Int?
+  status          String
+  userId          String
+  activeAttemptId String?  @unique
+  updatedAt       DateTime @updatedAt
+
+  user          User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  activeAttempt ScenarioAttempt? @relation(fields: [activeAttemptId], references: [id], onDelete: SetNull)
 
   @@unique([userId, scenarioId])
 }

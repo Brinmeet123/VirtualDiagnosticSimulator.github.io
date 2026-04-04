@@ -1,6 +1,7 @@
 'use client'
 
 import { Scenario } from '@/data/scenarios'
+import type { RubricBreakdown } from '@/lib/scoring'
 import VocabText from './VocabText'
 import VocabContextBlock from './VocabContextBlock'
 import { vocab, getVocabTerm } from '@/data/vocab'
@@ -55,6 +56,13 @@ type Props = {
   savedTerms?: string[]
   onTermClick?: (term: string) => void
   onTermSave?: (term: string) => void
+  /** Deterministic rubric from scenario completion scoring */
+  scenarioScore?: {
+    score: number
+    level: string
+    feedback: string
+    rubric: RubricBreakdown
+  }
 }
 
 const ratingColors: Record<string, string> = {
@@ -64,7 +72,46 @@ const ratingColors: Record<string, string> = {
   Poor: 'bg-red-100 text-red-800 border-red-300',
 }
 
-export default function SummaryPanel({ scenario, assessment, viewMode = 'simple', clickedTerms = [], savedTerms = [], onTermClick, onTermSave }: Props) {
+function RubricBlock({ rubric, score, level }: { rubric: RubricBreakdown; score: number; level: string }) {
+  const rows: { label: string; value: number; max: number }[] = [
+    { label: 'Diagnosis', value: rubric.diagnosis, max: 40 },
+    { label: 'Questioning', value: rubric.questioning, max: 25 },
+    { label: 'Reasoning', value: rubric.reasoning, max: 25 },
+    { label: 'Efficiency', value: rubric.efficiency, max: 10 },
+  ]
+  return (
+    <div className="mb-6 p-4 bg-teal-50 rounded-lg border border-teal-200">
+      <h3 className="text-lg font-semibold text-teal-900 mb-2">Scenario score</h3>
+      <p className="text-2xl font-bold text-slate-900 mb-1 tabular-nums transition-all duration-500 ease-out">
+        {score}{' '}
+        <span className="text-lg font-semibold text-teal-800">({level})</span>
+      </p>
+      <p className="text-xs text-slate-600 mb-4">Weighted rubric (0–100)</p>
+      <h4 className="text-sm font-semibold text-slate-800 mb-2">Breakdown</h4>
+      <ul className="space-y-1.5 text-sm text-slate-700">
+        {rows.map((r) => (
+          <li key={r.label} className="flex justify-between gap-4 tabular-nums">
+            <span>{r.label}</span>
+            <span>
+              {r.value}/{r.max}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
+export default function SummaryPanel({
+  scenario,
+  assessment,
+  viewMode = 'simple',
+  clickedTerms = [],
+  savedTerms = [],
+  onTermClick,
+  onTermSave,
+  scenarioScore,
+}: Props) {
   // Calculate badges based on behavior
   const badges: string[] = []
   
@@ -119,6 +166,16 @@ export default function SummaryPanel({ scenario, assessment, viewMode = 'simple'
     <div className="bg-white rounded-lg shadow-md p-6 mb-6">
       <VocabContextBlock source="debrief" scenarioId={scenario.id} text={debriefContext}>
       <h2 className="text-2xl font-bold text-gray-900 mb-6">Assessment & Debrief</h2>
+
+      {scenarioScore && (
+        <>
+          <RubricBlock rubric={scenarioScore.rubric} score={scenarioScore.score} level={scenarioScore.level} />
+          <div className="mb-6 p-4 bg-slate-50 rounded-lg border border-slate-200">
+            <h3 className="text-sm font-semibold text-slate-900 mb-2">Rubric feedback</h3>
+            <p className="text-sm text-slate-700">{scenarioScore.feedback}</p>
+          </div>
+        </>
+      )}
       
       {/* Badges Section */}
       <div className="mb-6 p-4 bg-gradient-to-r from-primary-50 to-blue-50 rounded-lg border-2 border-primary-200">

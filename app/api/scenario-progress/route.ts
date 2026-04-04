@@ -47,6 +47,7 @@ export async function POST(req: Request) {
           scenarioId,
           score: nextScore,
           status,
+          activeAttemptId: null,
         },
         update: {
           score: nextScore,

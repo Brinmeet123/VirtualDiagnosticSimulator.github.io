@@ -2,12 +2,12 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { scoreToLevel } from '@/lib/scoring'
+import { scenarios } from '@/data/scenarios'
 
-function performanceLevel(totalScore: number): string {
-  if (totalScore < 100) return 'Building foundation'
-  if (totalScore < 300) return 'Developing clinician'
-  if (totalScore < 600) return 'Strong diagnostic reasoning'
-  return 'Expert track'
+function performanceLevelFromCompleted(avgScore: number, completedCount: number): string {
+  if (completedCount === 0) return 'Building foundation'
+  return scoreToLevel(avgScore)
 }
 
 export default async function DashboardPage() {
@@ -22,6 +22,18 @@ export default async function DashboardPage() {
       _count: { select: { vocab: true } },
     },
   })
+
+  const allProgress = await prisma.scenarioProgress.findMany({
+    where: { userId: session.user.id },
+    select: { scenarioId: true, status: true, score: true },
+  })
+  const progressById = new Map(allProgress.map((p) => [p.scenarioId, p]))
+  const completedRows = allProgress.filter((p) => p.status === 'completed' && p.score != null)
+  const scenariosCompleted = completedRows.length
+  const avgScore =
+    scenariosCompleted > 0
+      ? completedRows.reduce((acc, r) => acc + (r.score ?? 0), 0) / scenariosCompleted
+      : 0
 
   if (!user) {
     return (
@@ -71,17 +83,50 @@ export default async function DashboardPage() {
             </div>
             <div>
               <dt className="text-slate-500">Performance level</dt>
-              <dd className="text-slate-900 font-medium">{performanceLevel(user.totalScore)}</dd>
+              <dd className="text-slate-900 font-medium">
+                {performanceLevelFromCompleted(avgScore, scenariosCompleted)}
+              </dd>
             </div>
             <div>
               <dt className="text-slate-500">Scenarios completed</dt>
-              <dd className="text-slate-900 font-medium">{user.streak}</dd>
+              <dd className="text-slate-900 font-medium">{scenariosCompleted}</dd>
             </div>
             <div>
               <dt className="text-slate-500">Saved vocabulary</dt>
               <dd className="text-slate-900 font-medium">{user._count.vocab} terms</dd>
             </div>
           </dl>
+        </div>
+      </div>
+
+      <div className="mt-10">
+        <h2 className="text-sm font-semibold text-teal-800 uppercase tracking-wide mb-4">Scenario progress</h2>
+        <div className="bg-white rounded-xl border border-slate-200 shadow-sm divide-y divide-slate-100">
+          {scenarios.map((s) => {
+            const p = progressById.get(s.id)
+            let label = '⚪ Not started'
+            let detail = ''
+            if (p?.status === 'in_progress') {
+              label = '🟡 In progress'
+              detail = p.score != null ? `Best score ${p.score}` : ''
+            } else if (p?.status === 'completed') {
+              label = '✅ Completed'
+              detail = p.score != null ? `Best ${p.score}` : ''
+            }
+            return (
+              <Link
+                key={s.id}
+                href={`/scenarios/${s.id}`}
+                className="flex items-center justify-between gap-4 px-4 py-3 hover:bg-slate-50 transition text-sm"
+              >
+                <span className="font-medium text-slate-900">{s.title}</span>
+                <span className="shrink-0 text-slate-600 tabular-nums">
+                  <span className="mr-2">{label}</span>
+                  {detail ? <span className="text-slate-500">{detail}</span> : null}
+                </span>
+              </Link>
+            )
+          })}
         </div>
       </div>
 
