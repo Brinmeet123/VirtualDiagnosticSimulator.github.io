@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useSession } from 'next-auth/react'
 import { Scenario } from '@/data/scenarios'
 import type { RubricBreakdown } from '@/lib/scoring'
@@ -116,14 +116,13 @@ export default function ScenarioPlayer({ scenario }: Props) {
   const [isMobile, setIsMobile] = useState(false)
   const [mobileTab, setMobileTab] = useState<'helper' | 'chat'>('chat')
 
-  // Check if mobile view
+  // Match media avoids resize/scrollbar thrash flipping layout at ~768px (flash between tabs).
   useEffect(() => {
-    const checkMobile = () => {
-      setIsMobile(window.innerWidth < 768)
-    }
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
+    const mq = window.matchMedia('(max-width: 767px)')
+    const apply = () => setIsMobile(mq.matches)
+    apply()
+    mq.addEventListener('change', apply)
+    return () => mq.removeEventListener('change', apply)
   }, [])
 
   // Start or resume tracked attempt (signed-in users)
@@ -208,9 +207,9 @@ export default function ScenarioPlayer({ scenario }: Props) {
   ])
 
 
-  const handleChatUpdate = (messages: Message[]) => {
+  const handleChatUpdate = useCallback((messages: Message[]) => {
     setChatMessages(messages)
-  }
+  }, [])
 
   const handleTermClick = (term: string) => {
     if (!clickedTerms.includes(term)) {

@@ -29,6 +29,14 @@ function shouldFallbackToPatientMocks(): boolean {
   return window.location.hostname.endsWith('.github.io')
 }
 
+function messagesShallowEqual(a: Message[], b: Message[]): boolean {
+  if (a.length !== b.length) return false
+  for (let i = 0; i < a.length; i++) {
+    if (a[i].role !== b[i].role || a[i].content !== b[i].content) return false
+  }
+  return true
+}
+
 export default function ChatPanel({ scenario, messages: initialMessages, onChatUpdate, viewMode = 'simple', onTermClick, onTermSave }: Props) {
   const [messages, setMessages] = useState<Message[]>(
     initialMessages || [
@@ -42,6 +50,8 @@ export default function ChatPanel({ scenario, messages: initialMessages, onChatU
   const [isLoading, setIsLoading] = useState(false)
   const messagesScrollRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const onChatUpdateRef = useRef(onChatUpdate)
+  onChatUpdateRef.current = onChatUpdate
 
   // Listen for question insertion from QuestionBank
   useEffect(() => {
@@ -58,26 +68,23 @@ export default function ChatPanel({ scenario, messages: initialMessages, onChatU
     }
   }, [])
 
-  // Sync with parent when messages change
+  // Sync with parent when messages change (stable ref avoids re-running when parent omits useCallback).
   useEffect(() => {
-    onChatUpdate(messages)
-  }, [messages, onChatUpdate])
+    onChatUpdateRef.current(messages)
+  }, [messages])
 
-  // Update local state when parent provides new messages
+  // Apply parent-driven updates (e.g. resume) without resetting when the array reference changes but content is identical.
   useEffect(() => {
-    if (initialMessages && initialMessages.length > 0) {
-      setMessages(initialMessages)
-    }
+    if (!initialMessages || initialMessages.length === 0) return
+    setMessages((prev) => (messagesShallowEqual(initialMessages, prev) ? prev : initialMessages))
   }, [initialMessages])
 
   useEffect(() => {
     const el = messagesScrollRef.current
     if (!el) return
-    const scrollToBottom = () => {
+    requestAnimationFrame(() => {
       el.scrollTop = el.scrollHeight
-    }
-    scrollToBottom()
-    requestAnimationFrame(scrollToBottom)
+    })
   }, [messages, isLoading])
 
   const handleSubmit = async (e: React.FormEvent) => {
