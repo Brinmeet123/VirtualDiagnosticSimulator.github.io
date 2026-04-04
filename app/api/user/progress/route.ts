@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { scenarios } from '@/data/scenarios'
+import { getScenarioSummariesForUser } from '@/lib/scenarioMastery'
 
 export async function GET() {
   const session = await auth()
@@ -11,29 +12,22 @@ export async function GET() {
 
   try {
     const userId = session.user.id
+    const scenarioIds = scenarios.map((s) => s.id)
 
-    const [user, progressRows] = await Promise.all([
+    const [user, summaries] = await Promise.all([
       prisma.user.findUnique({
         where: { id: userId },
         select: { totalScore: true },
       }),
-      prisma.scenarioProgress.findMany({
-        where: { userId },
-        select: { scenarioId: true, status: true, score: true },
-      }),
+      getScenarioSummariesForUser(userId, scenarioIds),
     ])
 
-    const byId = new Map(progressRows.map((p) => [p.scenarioId, p]))
-
-    const scenarioProgress = scenarios.map((s) => {
-      const p = byId.get(s.id)
-      if (!p) {
-        return { scenarioId: s.id, status: 'not_started' as const, bestScore: null as number | null }
-      }
+    const scenarioProgress = scenarioIds.map((id) => {
+      const sum = summaries.get(id)!
       return {
-        scenarioId: s.id,
-        status: p.status as 'in_progress' | 'completed',
-        bestScore: p.score,
+        scenarioId: id,
+        status: sum.displayStatus,
+        bestScore: sum.bestScore,
       }
     })
 

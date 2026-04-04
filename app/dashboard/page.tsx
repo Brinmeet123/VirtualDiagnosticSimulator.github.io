@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { scoreToLevel } from '@/lib/scoring'
 import { scenarios } from '@/data/scenarios'
+import { countDistinctCompletedScenarios, getScenarioSummariesForUser } from '@/lib/scenarioMastery'
 
 function performanceLevelFromCompleted(avgScore: number, completedCount: number): string {
   if (completedCount === 0) return 'Building foundation'
@@ -16,23 +17,25 @@ export default async function DashboardPage() {
     redirect('/login?callbackUrl=/dashboard')
   }
 
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    include: {
-      _count: { select: { vocab: true } },
-    },
-  })
+  const scenarioIds = scenarios.map((s) => s.id)
 
-  const allProgress = await prisma.scenarioProgress.findMany({
-    where: { userId: session.user.id },
-    select: { scenarioId: true, status: true, score: true },
-  })
-  const progressById = new Map(allProgress.map((p) => [p.scenarioId, p]))
-  const completedRows = allProgress.filter((p) => p.status === 'completed' && p.score != null)
-  const scenariosCompleted = completedRows.length
+  const [user, scenariosCompleted, summaries] = await Promise.all([
+    prisma.user.findUnique({
+      where: { id: session.user.id },
+      include: {
+        _count: { select: { vocab: true } },
+      },
+    }),
+    countDistinctCompletedScenarios(session.user.id),
+    getScenarioSummariesForUser(session.user.id, scenarioIds),
+  ])
+
+  const completedSummaries = scenarioIds
+    .map((id) => summaries.get(id)!)
+    .filter((s) => s.displayStatus === 'completed')
   const avgScore =
-    scenariosCompleted > 0
-      ? completedRows.reduce((acc, r) => acc + (r.score ?? 0), 0) / scenariosCompleted
+    completedSummaries.length > 0
+      ? completedSummaries.reduce((acc, s) => acc + (s.bestScore ?? 0), 0) / completedSummaries.length
       : 0
 
   if (!user) {
@@ -103,15 +106,15 @@ export default async function DashboardPage() {
         <h2 className="text-sm font-semibold text-teal-800 uppercase tracking-wide mb-4">Scenario progress</h2>
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm divide-y divide-slate-100">
           {scenarios.map((s) => {
-            const p = progressById.get(s.id)
+            const sum = summaries.get(s.id)!
             let label = '⚪ Not started'
             let detail = ''
-            if (p?.status === 'in_progress') {
+            if (sum.displayStatus === 'in_progress') {
               label = '🟡 In progress'
-              detail = p.score != null ? `Best score ${p.score}` : ''
-            } else if (p?.status === 'completed') {
+              detail = sum.bestScore != null ? `Best score ${sum.bestScore}` : ''
+            } else if (sum.displayStatus === 'completed') {
               label = '✅ Completed'
-              detail = p.score != null ? `Best ${p.score}` : ''
+              detail = sum.bestScore != null ? `Best ${sum.bestScore}` : ''
             }
             return (
               <Link

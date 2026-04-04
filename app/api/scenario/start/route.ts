@@ -35,9 +35,9 @@ export async function POST(req: Request) {
         include: { activeAttempt: true },
       })
 
+      // Resume current session: active attempt is still in progress (replay keeps prior completed rows intact).
       if (
-        existing?.status === 'in_progress' &&
-        existing.activeAttemptId &&
+        existing?.activeAttemptId &&
         existing.activeAttempt?.status === 'in_progress'
       ) {
         const a = existing.activeAttempt
@@ -48,6 +48,11 @@ export async function POST(req: Request) {
           state: (a.state as unknown) ?? null,
         }
       }
+
+      const hasEverCompleted =
+        (await tx.scenarioAttempt.count({
+          where: { userId, scenarioId, status: 'completed' },
+        })) > 0
 
       const attempt = await tx.scenarioAttempt.create({
         data: {
@@ -62,13 +67,14 @@ export async function POST(req: Request) {
         create: {
           userId,
           scenarioId,
-          status: 'in_progress',
+          status: hasEverCompleted ? 'completed' : 'in_progress',
           score: existing?.score ?? null,
           activeAttemptId: attempt.id,
         },
         update: {
-          status: 'in_progress',
           activeAttemptId: attempt.id,
+          // Once ANY attempt has completed, keep progress row as completed (replay adds new in_progress attempts only).
+          status: hasEverCompleted ? 'completed' : 'in_progress',
         },
       })
 

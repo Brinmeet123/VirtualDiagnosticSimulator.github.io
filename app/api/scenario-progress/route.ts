@@ -51,7 +51,8 @@ export async function POST(req: Request) {
         },
         update: {
           score: nextScore,
-          status,
+          // Never downgrade after a completion (replay uses scenario_attempts + mastery helpers).
+          status: prev?.status === 'completed' ? 'completed' : status,
         },
       })
 
