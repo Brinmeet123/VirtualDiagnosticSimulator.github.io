@@ -167,8 +167,6 @@ export type Scenario = {
   difficulty: ScenarioDifficulty;
   estimatedMinutes: number;
   description: string;
-  /** Path under /public, e.g. /scenarios/chest-pain.jpg */
-  sceneImage: string;
   objectives: string[];
   patientPersona: PatientPersona;
   aiInstructions: AIInstructions;
@@ -194,7 +192,6 @@ export const scenarios: Scenario[] = [
     estimatedMinutes: 12,
     description:
       "You are the ER doctor evaluating a 54-year-old man with chest pain that started 30 minutes ago while walking up stairs.",
-    sceneImage: "/scenarios/chest-pain.jpg",
     objectives: [
       "Practice taking a focused chest pain history.",
       "Identify red flags that suggest an urgent cardiac cause.",
@@ -427,7 +424,6 @@ export const scenarios: Scenario[] = [
     estimatedMinutes: 12,
     description:
       "A 42-year-old woman presents with a sudden, severe headache that started one hour ago.",
-    sceneImage: "/scenarios/sudden-headache.jpg",
     objectives: [
       "Identify red flags in headache evaluation",
       "Differentiate primary vs secondary headache causes",
@@ -540,7 +536,6 @@ export const scenarios: Scenario[] = [
     estimatedMinutes: 12,
     description:
       "A 60-year-old man presents with sudden onset shortness of breath.",
-    sceneImage: "/scenarios/acute-sob.jpg",
     objectives: [
       "Differentiate cardiac vs pulmonary causes",
       "Recognize pulmonary embolism red flags",
@@ -651,7 +646,6 @@ export const scenarios: Scenario[] = [
     estimatedMinutes: 10,
     description:
       "A 19-year-old college student presents with abdominal pain.",
-    sceneImage: "/scenarios/rlq-abdominal.jpg",
     objectives: [
       "Use location-based differential diagnosis",
       "Recognize appendicitis presentation",
@@ -759,7 +753,6 @@ export const scenarios: Scenario[] = [
     estimatedMinutes: 14,
     description:
       "A 70-year-old woman presents with fever and acute confusion.",
-    sceneImage: "/scenarios/fever-confusion.jpg",
     objectives: [
       "Recognize sepsis and CNS infection",
       "Prioritize dangerous diagnoses",

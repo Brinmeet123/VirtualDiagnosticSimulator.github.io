@@ -15,7 +15,13 @@ export default function NextStepGuidance({ children, className = '', compact }: 
       ].join(' ')}
       role="note"
     >
-      <p className="text-amber-950/90 leading-snug">{children}</p>
+      <p className="font-medium text-amber-900">
+        <span className="mr-1.5" aria-hidden>
+          👉
+        </span>
+        Next step
+      </p>
+      <p className="mt-1 text-amber-950/90 leading-snug">{children}</p>
     </div>
   )
 }
