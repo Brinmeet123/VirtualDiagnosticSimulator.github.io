@@ -10,7 +10,6 @@ export default function VocabPage() {
   const { list, remove, setMastered, count, masteredCount, stats, isLoaded, isAuthed } = useVocabStore()
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('All')
-  const [viewMode, setViewMode] = useState<'simple' | 'clinical'>('simple')
 
   const savedItems = list()
 
@@ -91,30 +90,6 @@ export default function VocabPage() {
             onChange={(e) => setSearchQuery(e.target.value)}
             className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500"
           />
-
-          <div className="flex items-center gap-2">
-            <span className="text-sm font-medium text-gray-700">View:</span>
-            <div className="flex bg-gray-100 rounded-md p-1">
-              <button
-                type="button"
-                onClick={() => setViewMode('simple')}
-                className={`px-3 py-1 text-sm font-medium rounded transition ${
-                  viewMode === 'simple' ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                Simple
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode('clinical')}
-                className={`px-3 py-1 text-sm font-medium rounded transition ${
-                  viewMode === 'clinical' ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'
-                }`}
-              >
-                Clinical
-              </button>
-            </div>
-          </div>
         </div>
 
         {categories.length > 0 && (
@@ -163,9 +138,7 @@ export default function VocabPage() {
             const title = term?.term ?? saved.sourceLabel ?? saved.termId
             const definition =
               term != null
-                ? viewMode === 'simple'
-                  ? term.shortDefinition
-                  : term.definition
+                ? term.shortDefinition
                 : saved.sourceDefinition ??
                   'Definition not found — term may have been removed from the local dictionary.'
 

@@ -355,11 +355,7 @@ export function getMockAssessment() {
   }
 }
 
-export function getMockTermExplanation(
-  selectedText: string,
-  contextText?: string,
-  viewMode: 'simple' | 'clinical' = 'simple'
-) {
+export function getMockTermExplanation(selectedText: string, contextText?: string) {
   const term = selectedText.trim().toLowerCase()
 
   const commonTerms: Record<string, { simple: string; clinical: string; why: string; example: string }> = {

@@ -9,12 +9,6 @@ import { getScrollableAncestors } from '@/src/lib/scrollAnchor'
 import MedicalTermPopover from '@/components/vocab/MedicalTermPopover'
 import { useVocabStore } from '@/lib/useVocabStore'
 
-type ViewMode = 'simple' | 'clinical'
-
-type Props = {
-  viewMode?: ViewMode
-}
-
 function isFormFieldFocused(): boolean {
   const el = document.activeElement
   if (!el || !(el instanceof HTMLElement)) return false
@@ -54,7 +48,7 @@ function isAIGeneratedTerm(term: MedicalTerm | null): boolean {
   return term.id.startsWith('ai:')
 }
 
-export default function SelectionVocabHandler({ viewMode = 'simple' }: Props) {
+export default function SelectionVocabHandler() {
   const [selectedText, setSelectedText] = useState<string | null>(null)
   const [selectionPosition, setSelectionPosition] = useState<{ x: number; y: number } | null>(null)
   const [medicalTerm, setMedicalTerm] = useState<MedicalTerm | null>(null)
@@ -245,7 +239,6 @@ export default function SelectionVocabHandler({ viewMode = 'simple' }: Props) {
       position={selectionPosition}
       onClose={handleClose}
       onSave={handleSave}
-      viewMode={viewMode}
       isSaved={saved}
       isSaving={isSaving}
       canSave={canSave}

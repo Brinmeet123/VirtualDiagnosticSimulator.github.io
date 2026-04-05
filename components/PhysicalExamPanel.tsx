@@ -5,19 +5,16 @@ import { PhysicalExamSection } from '@/data/scenarios'
 import VocabText from './VocabText'
 import VocabContextBlock from './VocabContextBlock'
 
-type ViewMode = 'simple' | 'clinical'
-
 type Props = {
   sections: PhysicalExamSection[]
   scenarioId?: string
   viewedSections?: string[]
   onSectionsViewed: (sectionIds: string[]) => void
-  viewMode?: ViewMode
   onTermClick?: (term: string) => void
   onTermSave?: (term: string) => void
 }
 
-export default function PhysicalExamPanel({ sections, scenarioId, viewedSections: initialViewedSections = [], onSectionsViewed, viewMode = 'simple', onTermClick, onTermSave }: Props) {
+export default function PhysicalExamPanel({ sections, scenarioId, viewedSections: initialViewedSections = [], onSectionsViewed, onTermClick, onTermSave }: Props) {
   const [viewedSections, setViewedSections] = useState<Set<string>>(new Set(initialViewedSections))
   const [expandedSection, setExpandedSection] = useState<string | null>(null)
 
@@ -66,7 +63,6 @@ export default function PhysicalExamPanel({ sections, scenarioId, viewedSections
                   <p className="text-sm text-gray-700 mb-2">
                     <VocabText 
                       text={section.summary} 
-                      viewMode={viewMode}
                       onTermClick={onTermClick}
                       onTermSave={onTermSave}
                     />
@@ -75,7 +71,6 @@ export default function PhysicalExamPanel({ sections, scenarioId, viewedSections
                   <p className="text-sm text-gray-700">
                     <VocabText 
                       text={section.details} 
-                      viewMode={viewMode}
                       onTermClick={onTermClick}
                       onTermSave={onTermSave}
                     />

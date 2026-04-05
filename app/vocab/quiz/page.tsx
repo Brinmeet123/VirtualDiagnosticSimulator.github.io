@@ -19,7 +19,6 @@ export default function QuizPage() {
   const [showResult, setShowResult] = useState(false)
   const [score, setScore] = useState(0)
   const [quizComplete, setQuizComplete] = useState(false)
-  const [viewMode, setViewMode] = useState<'simple' | 'clinical'>('simple')
 
   const savedVocabTerms = useMemo((): VocabTerm[] => {
     return list()
@@ -37,9 +36,9 @@ export default function QuizPage() {
         .filter((t) => t.term !== term.term)
         .sort(() => Math.random() - 0.5)
         .slice(0, 3)
-        .map((t) => (viewMode === 'simple' ? t.definitionSimple : t.definitionClinical))
+        .map((t) => t.definitionSimple)
 
-      const correctAnswer = viewMode === 'simple' ? term.definitionSimple : term.definitionClinical
+      const correctAnswer = term.definitionSimple
       const allOptions = [correctAnswer, ...wrongAnswers].sort(() => Math.random() - 0.5)
       const correctIndex = allOptions.indexOf(correctAnswer)
 
@@ -60,7 +59,7 @@ export default function QuizPage() {
       generateQuiz()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [viewMode, isLoaded, savedVocabTerms.length])
+  }, [isLoaded, savedVocabTerms.length])
 
   const handleAnswerSelect = (index: number) => {
     if (showResult) return
@@ -157,29 +156,6 @@ export default function QuizPage() {
     <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-6 flex justify-between items-center flex-wrap gap-4">
         <h1 className="text-2xl font-bold text-gray-900">Vocabulary quiz</h1>
-        <div className="flex items-center gap-2">
-          <span className="text-sm font-medium text-gray-700">View:</span>
-          <div className="flex bg-gray-100 rounded-md p-1">
-            <button
-              type="button"
-              onClick={() => setViewMode('simple')}
-              className={`px-3 py-1 text-sm font-medium rounded transition ${
-                viewMode === 'simple' ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              Simple
-            </button>
-            <button
-              type="button"
-              onClick={() => setViewMode('clinical')}
-              className={`px-3 py-1 text-sm font-medium rounded transition ${
-                viewMode === 'clinical' ? 'bg-white text-primary-600 shadow-sm' : 'text-gray-600 hover:text-gray-900'
-              }`}
-            >
-              Clinical
-            </button>
-          </div>
-        </div>
       </div>
 
       <div className="mb-6">

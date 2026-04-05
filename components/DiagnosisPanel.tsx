@@ -6,8 +6,6 @@ import { diagnosisCatalog, DxCategory } from '@/data/diagnosisCatalog'
 import { resolveDx, checkMissingMustNotMiss } from '@/lib/dxEngine'
 import VocabText from './VocabText'
 
-type ViewMode = 'simple' | 'clinical'
-
 type DifferentialItem = {
   dxId: string
   rank: number
@@ -26,7 +24,6 @@ type Props = {
     finalDxId: string | null
     missingMustNotMiss: string[]
   }) => void
-  viewMode?: ViewMode
   onTermClick?: (term: string) => void
   onTermSave?: (term: string) => void
 }
@@ -38,7 +35,6 @@ export default function DiagnosisPanel({
   onDifferentialUpdate,
   onFinalDxUpdate,
   onSubmit,
-  viewMode = 'simple',
   onTermClick,
   onTermSave
 }: Props) {
@@ -228,7 +224,6 @@ export default function DiagnosisPanel({
                       <p className="text-sm text-gray-600 mb-1">
                         <VocabText 
                           text={dx.brief} 
-                          viewMode={viewMode}
                           onTermClick={onTermClick}
                           onTermSave={onTermSave}
                         />
@@ -301,7 +296,6 @@ export default function DiagnosisPanel({
                       <p className="text-xs text-gray-600 mb-2">
                         <VocabText 
                           text={resolved.explanation} 
-                          viewMode={viewMode}
                           onTermClick={onTermClick}
                           onTermSave={onTermSave}
                         />

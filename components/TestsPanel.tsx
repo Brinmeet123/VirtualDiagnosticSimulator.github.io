@@ -7,13 +7,10 @@ import { resolveTest } from '@/lib/testEngine'
 import VocabText from './VocabText'
 import VocabContextBlock from './VocabContextBlock'
 
-type ViewMode = 'simple' | 'clinical'
-
 type Props = {
   scenario: Scenario
   orderedTests?: Map<string, OrderedTest>
   onTestsOrdered: (tests: Map<string, OrderedTest>) => void
-  viewMode?: ViewMode
   onTermClick?: (term: string) => void
   onTermSave?: (term: string) => void
 }
@@ -23,7 +20,7 @@ type OrderedTest = {
   result: string
 }
 
-export default function TestsPanel({ scenario, orderedTests: initialOrderedTests, onTestsOrdered, viewMode = 'simple', onTermClick, onTermSave }: Props) {
+export default function TestsPanel({ scenario, orderedTests: initialOrderedTests, onTestsOrdered, onTermClick, onTermSave }: Props) {
   const [selectedCategory, setSelectedCategory] = useState<TestCategory | 'All'>('All')
   const [selectedKind, setSelectedKind] = useState<TestKind | 'All'>('All')
   const [searchQuery, setSearchQuery] = useState('')
@@ -183,7 +180,6 @@ export default function TestsPanel({ scenario, orderedTests: initialOrderedTests
                       <p className="text-sm text-gray-600 mb-1">
                         <VocabText 
                           text={test.description} 
-                          viewMode={viewMode}
                           onTermClick={onTermClick}
                           onTermSave={onTermSave}
                         />
@@ -209,7 +205,6 @@ export default function TestsPanel({ scenario, orderedTests: initialOrderedTests
                       <p className="text-sm text-gray-700 bg-white p-2 rounded border border-gray-200">
                         <VocabText 
                           text={orderedTests.get(test.id)?.result || ''} 
-                          viewMode={viewMode}
                           onTermClick={onTermClick}
                           onTermSave={onTermSave}
                         />

@@ -11,13 +11,10 @@ type Message = {
   content: string
 }
 
-type ViewMode = 'simple' | 'clinical'
-
 type Props = {
   scenario: Scenario
   messages?: Message[]
   onChatUpdate: (messages: Message[]) => void
-  viewMode?: ViewMode
   onTermClick?: (term: string) => void
   onTermSave?: (term: string) => void
 }
@@ -37,7 +34,7 @@ function messagesShallowEqual(a: Message[], b: Message[]): boolean {
   return true
 }
 
-export default function ChatPanel({ scenario, messages: initialMessages, onChatUpdate, viewMode = 'simple', onTermClick, onTermSave }: Props) {
+export default function ChatPanel({ scenario, messages: initialMessages, onChatUpdate, onTermClick, onTermSave }: Props) {
   const [messages, setMessages] = useState<Message[]>(
     initialMessages || [
       {
@@ -240,7 +237,6 @@ export default function ChatPanel({ scenario, messages: initialMessages, onChatU
                 {msg.role === 'patient' ? (
                   <VocabText 
                     text={msg.content} 
-                    viewMode={viewMode}
                     onTermClick={onTermClick}
                     onTermSave={onTermSave}
                   />

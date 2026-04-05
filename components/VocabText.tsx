@@ -5,11 +5,8 @@ import { vocab, VocabTerm } from '@/data/vocab'
 import { lookupMedicalTerm } from '@/src/lib/medicalTerms'
 import { useVocabStore } from '@/lib/useVocabStore'
 
-type ViewMode = 'simple' | 'clinical'
-
 type Props = {
   text: string
-  viewMode?: ViewMode
   onTermClick?: (term: string) => void
   onTermSave?: (term: string) => void
 }
@@ -20,7 +17,7 @@ type VocabMatch = {
   endIndex: number
 }
 
-export default function VocabText({ text, viewMode = 'simple', onTermClick, onTermSave }: Props) {
+export default function VocabText({ text, onTermClick, onTermSave }: Props) {
   const [selectedTerm, setSelectedTerm] = useState<VocabTerm | null>(null)
   const [popoverPosition, setPopoverPosition] = useState<{ x: number; y: number } | null>(null)
   const { saveMedicalTerm } = useVocabStore()
@@ -176,11 +173,7 @@ export default function VocabText({ text, viewMode = 'simple', onTermClick, onTe
             
             <div className="mb-3">
               <p className="text-sm text-gray-700 mb-2">
-                <strong>Definition:</strong> {
-                  viewMode === 'simple' 
-                    ? selectedTerm.definitionSimple 
-                    : selectedTerm.definitionClinical
-                }
+                <strong>Definition:</strong> {selectedTerm.definitionSimple}
               </p>
               
               <p className="text-sm text-gray-700 mb-2">

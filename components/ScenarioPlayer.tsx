@@ -14,9 +14,6 @@ import SummaryPanel from './SummaryPanel'
 import SectionNav, { ClinicalSection } from './SectionNav'
 import HistoryHelperPanel from './HistoryHelperPanel'
 
-type LearningMode = 'guided' | 'standard' | 'advanced'
-type ViewMode = 'simple' | 'clinical'
-
 type Message = {
   role: 'doctor' | 'patient'
   content: string
@@ -88,8 +85,6 @@ type PersistedState = {
   differential: DifferentialItem[]
   finalDiagnosisId: string | null
   activeSection: ClinicalSection
-  learningMode: LearningMode
-  viewMode: ViewMode
 }
 
 export default function ScenarioPlayer({ scenario }: Props) {
@@ -97,8 +92,6 @@ export default function ScenarioPlayer({ scenario }: Props) {
   const [attemptId, setAttemptId] = useState<string | null>(null)
   const [scenarioScore, setScenarioScore] = useState<ScenarioScoreState | null>(null)
   const [activeSection, setActiveSection] = useState<ClinicalSection>('history')
-  const [learningMode, setLearningMode] = useState<LearningMode>('guided')
-  const [viewMode, setViewMode] = useState<ViewMode>('simple')
   const [chatMessages, setChatMessages] = useState<Message[]>([
     {
       role: 'patient',
@@ -154,8 +147,6 @@ export default function ScenarioPlayer({ scenario }: Props) {
             if (Array.isArray(st.differential)) setDifferential(st.differential)
             if (st.finalDiagnosisId !== undefined) setFinalDiagnosisId(st.finalDiagnosisId)
             if (st.activeSection) setActiveSection(st.activeSection)
-            if (st.learningMode) setLearningMode(st.learningMode)
-            if (st.viewMode) setViewMode(st.viewMode)
           }
         }
       } catch (e) {
@@ -177,8 +168,6 @@ export default function ScenarioPlayer({ scenario }: Props) {
         differential,
         finalDiagnosisId,
         activeSection,
-        learningMode,
-        viewMode,
       }
       void fetch('/api/scenario/attempt', {
         method: 'PATCH',
@@ -199,8 +188,6 @@ export default function ScenarioPlayer({ scenario }: Props) {
     differential,
     finalDiagnosisId,
     activeSection,
-    learningMode,
-    viewMode,
     attemptId,
     scenario.id,
     sessionStatus,
@@ -420,57 +407,10 @@ export default function ScenarioPlayer({ scenario }: Props) {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
       <div className="mb-6">
-        <div className="flex justify-between items-start mb-2">
+        <div className="mb-2">
           <div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">{scenario.title}</h1>
             <p className="text-gray-600">{scenario.description}</p>
-          </div>
-          
-          {/* Learning Mode and View Mode Controls */}
-          <div className="flex flex-col gap-3 items-end">
-            {/* Learning Mode Dropdown */}
-            <div className="flex items-center gap-2">
-              <label htmlFor="learning-mode" className="text-sm font-medium text-gray-700">
-                Learning Mode:
-              </label>
-              <select
-                id="learning-mode"
-                value={learningMode}
-                onChange={(e) => setLearningMode(e.target.value as LearningMode)}
-                className="px-3 py-1.5 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
-              >
-                <option value="guided">Guided</option>
-                <option value="standard">Standard</option>
-                <option value="advanced">Advanced</option>
-              </select>
-            </div>
-            
-            {/* View Mode Toggle */}
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-gray-700">View:</span>
-              <div className="flex bg-gray-100 rounded-md p-1">
-                <button
-                  onClick={() => setViewMode('simple')}
-                  className={`px-3 py-1 text-sm font-medium rounded transition ${
-                    viewMode === 'simple'
-                      ? 'bg-white text-primary-600 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  Simple
-                </button>
-                <button
-                  onClick={() => setViewMode('clinical')}
-                  className={`px-3 py-1 text-sm font-medium rounded transition ${
-                    viewMode === 'clinical'
-                      ? 'bg-white text-primary-600 shadow-sm'
-                      : 'text-gray-600 hover:text-gray-900'
-                  }`}
-                >
-                  Clinical
-                </button>
-              </div>
-            </div>
           </div>
         </div>
       </div>
@@ -541,8 +481,6 @@ export default function ScenarioPlayer({ scenario }: Props) {
                 <div className="min-h-[400px]">
                   <HistoryHelperPanel
                     scenario={scenario}
-                    learningMode={learningMode}
-                    viewMode={viewMode}
                     onInsertQuestion={handleInsertQuestion}
                     messages={chatMessages}
                   />
@@ -553,7 +491,6 @@ export default function ScenarioPlayer({ scenario }: Props) {
                     scenario={scenario} 
                     messages={chatMessages} 
                     onChatUpdate={handleChatUpdate}
-                    viewMode={viewMode}
                     onTermClick={handleTermClick}
                     onTermSave={handleTermSave}
                   />
@@ -568,8 +505,6 @@ export default function ScenarioPlayer({ scenario }: Props) {
                 <div className="w-2/5 bg-gray-50 rounded-lg overflow-hidden p-4">
                   <HistoryHelperPanel
                     scenario={scenario}
-                    learningMode={learningMode}
-                    viewMode={viewMode}
                     onInsertQuestion={handleInsertQuestion}
                     messages={chatMessages}
                   />
@@ -582,7 +517,6 @@ export default function ScenarioPlayer({ scenario }: Props) {
                       scenario={scenario} 
                       messages={chatMessages} 
                       onChatUpdate={handleChatUpdate}
-                      viewMode={viewMode}
                       onTermClick={handleTermClick}
                       onTermSave={handleTermSave}
                     />
@@ -600,7 +534,6 @@ export default function ScenarioPlayer({ scenario }: Props) {
           scenarioId={scenario.id}
           viewedSections={viewedExamSections}
           onSectionsViewed={handleExamSectionsViewed}
-          viewMode={viewMode}
           onTermClick={handleTermClick}
           onTermSave={handleTermSave}
         />
@@ -611,7 +544,6 @@ export default function ScenarioPlayer({ scenario }: Props) {
           scenario={scenario} 
           orderedTests={orderedTests}
           onTestsOrdered={handleTestsOrdered}
-          viewMode={viewMode}
           onTermClick={handleTermClick}
           onTermSave={handleTermSave}
         />
@@ -625,7 +557,6 @@ export default function ScenarioPlayer({ scenario }: Props) {
           onDifferentialUpdate={handleDifferentialUpdate}
           onFinalDxUpdate={handleFinalDxUpdate}
           onSubmit={handleDiagnosisSubmit}
-          viewMode={viewMode}
           onTermClick={handleTermClick}
           onTermSave={handleTermSave}
         />
@@ -641,7 +572,6 @@ export default function ScenarioPlayer({ scenario }: Props) {
             <SummaryPanel 
               scenario={scenario} 
               assessment={assessment}
-              viewMode={viewMode}
               clickedTerms={clickedTerms}
               savedTerms={savedTerms}
               onTermClick={handleTermClick}

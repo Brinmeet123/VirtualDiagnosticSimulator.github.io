@@ -40,7 +40,6 @@ export type VocabExplanation = {
  */
 export async function resolveVocab(
   term: string,
-  _viewMode: 'simple' | 'clinical',
   _context?: VocabContext
 ): Promise<VocabExplanation | null> {
   const trimmedTerm = term.trim()

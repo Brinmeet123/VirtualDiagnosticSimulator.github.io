@@ -6,15 +6,12 @@ const USE_DEMO_MOCKS = process.env.DEMO_MODE === 'true'
 
 export async function POST(request: NextRequest) {
   // Store body data outside try block for fallback use
-  let bodyData: { selectedText: string; contextText?: string; viewMode: 'simple' | 'clinical' } = { 
-    selectedText: '', 
-    viewMode: 'simple' 
-  }
-  
+  let bodyData: { selectedText: string; contextText?: string } = { selectedText: '' }
+
   try {
     const body = await request.json()
-    const { selectedText, contextText, sourceType, scenarioMeta, viewMode } = body
-    bodyData = { selectedText, contextText, viewMode: viewMode || 'simple' }
+    const { selectedText, contextText, sourceType, scenarioMeta } = body
+    bodyData = { selectedText, contextText }
 
     if (!selectedText || typeof selectedText !== 'string') {
       return NextResponse.json(
@@ -24,7 +21,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (USE_DEMO_MOCKS) {
-      const mockExplanation = getMockTermExplanation(selectedText, contextText, viewMode)
+      const mockExplanation = getMockTermExplanation(selectedText, contextText)
       return NextResponse.json(mockExplanation)
     }
 
@@ -151,11 +148,7 @@ If the term is used as a clinical descriptor (like "tachycardic" meaning "having
     ) {
       console.log('Ollama unavailable, falling back to demo mode')
       // Use stored body data from try block scope
-      const mockExplanation = getMockTermExplanation(
-        bodyData.selectedText || 'term',
-        bodyData.contextText,
-        bodyData.viewMode || 'simple'
-      )
+      const mockExplanation = getMockTermExplanation(bodyData.selectedText || 'term', bodyData.contextText)
       return NextResponse.json(mockExplanation)
     }
     

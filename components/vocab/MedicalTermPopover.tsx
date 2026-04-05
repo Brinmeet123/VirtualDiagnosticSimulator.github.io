@@ -3,15 +3,12 @@
 import { useState, useEffect, useRef } from 'react'
 import type { MedicalTerm } from '@/src/types/medicalTerm'
 
-type ViewMode = 'simple' | 'clinical'
-
 type Props = {
   medicalTerm: MedicalTerm | null
   selectedText: string
   position: { x: number; y: number } | null
   onClose: () => void
   onSave: () => void
-  viewMode?: ViewMode
   isSaved: boolean
   isSaving: boolean
   canSave: boolean
@@ -28,7 +25,6 @@ export default function MedicalTermPopover({
   position,
   onClose,
   onSave,
-  viewMode = 'simple',
   isSaved,
   isSaving,
   canSave,
@@ -68,11 +64,7 @@ export default function MedicalTermPopover({
   if (!position) return null
 
   const heading = medicalTerm?.term ?? selectedText
-  const shortDef = medicalTerm
-    ? viewMode === 'simple'
-      ? medicalTerm.shortDefinition
-      : medicalTerm.definition
-    : null
+  const shortDef = medicalTerm ? medicalTerm.shortDefinition : null
   const longDef = medicalTerm?.definition
 
   const getPosition = () => {

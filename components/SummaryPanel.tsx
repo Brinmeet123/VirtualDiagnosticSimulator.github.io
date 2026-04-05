@@ -6,8 +6,6 @@ import VocabText from './VocabText'
 import VocabContextBlock from './VocabContextBlock'
 import { vocab, getVocabTerm } from '@/data/vocab'
 
-type ViewMode = 'simple' | 'clinical'
-
 type DebriefStructured = {
   summary: string
   strengths: string[]
@@ -51,7 +49,6 @@ type AssessmentResult = {
 type Props = {
   scenario: Scenario
   assessment: AssessmentResult
-  viewMode?: ViewMode
   clickedTerms?: string[]
   savedTerms?: string[]
   onTermClick?: (term: string) => void
@@ -105,7 +102,6 @@ function RubricBlock({ rubric, score, level }: { rubric: RubricBreakdown; score:
 export default function SummaryPanel({
   scenario,
   assessment,
-  viewMode = 'simple',
   clickedTerms = [],
   savedTerms = [],
   onTermClick,
@@ -240,7 +236,6 @@ export default function SummaryPanel({
         <p className="text-gray-700">
           <VocabText 
             text={assessment.summary} 
-            viewMode={viewMode}
             onTermClick={onTermClick}
             onTermSave={onTermSave}
           />
@@ -255,7 +250,6 @@ export default function SummaryPanel({
               <li key={idx}>
                 <VocabText 
                   text={strength} 
-                  viewMode={viewMode}
                   onTermClick={onTermClick}
                   onTermSave={onTermSave}
                 />
@@ -270,7 +264,6 @@ export default function SummaryPanel({
               <li key={idx}>
                 <VocabText 
                   text={area} 
-                  viewMode={viewMode}
                   onTermClick={onTermClick}
                   onTermSave={onTermSave}
                 />
@@ -286,7 +279,7 @@ export default function SummaryPanel({
           <ul className="list-disc list-inside space-y-2 text-gray-700">
             {ds.diagnosticReasoning.map((line, idx) => (
               <li key={idx}>
-                <VocabText text={line} viewMode={viewMode} onTermClick={onTermClick} onTermSave={onTermSave} />
+                <VocabText text={line} onTermClick={onTermClick} onTermSave={onTermSave} />
               </li>
             ))}
           </ul>
@@ -298,7 +291,6 @@ export default function SummaryPanel({
         <p className="text-gray-700">
           <VocabText 
             text={assessment.diagnosisFeedback} 
-            viewMode={viewMode}
             onTermClick={onTermClick}
             onTermSave={onTermSave}
           />
@@ -313,7 +305,6 @@ export default function SummaryPanel({
               <li key={idx}>
                 <VocabText 
                   text={point} 
-                  viewMode={viewMode}
                   onTermClick={onTermClick}
                   onTermSave={onTermSave}
                 />
@@ -328,7 +319,6 @@ export default function SummaryPanel({
         <p className="text-gray-700">
           <VocabText 
             text={assessment.testSelectionFeedback} 
-            viewMode={viewMode}
             onTermClick={onTermClick}
             onTermSave={onTermSave}
           />
@@ -341,7 +331,7 @@ export default function SummaryPanel({
           <ul className="list-disc list-inside space-y-1 text-gray-700">
             {ds.nextStepAdvice.map((line, idx) => (
               <li key={idx}>
-                <VocabText text={line} viewMode={viewMode} onTermClick={onTermClick} onTermSave={onTermSave} />
+                <VocabText text={line} onTermClick={onTermClick} onTermSave={onTermSave} />
               </li>
             ))}
           </ul>
@@ -354,7 +344,7 @@ export default function SummaryPanel({
           <ul className="list-disc list-inside space-y-1 text-gray-700">
             {ds.clinicalPearls.map((line, idx) => (
               <li key={idx}>
-                <VocabText text={line} viewMode={viewMode} onTermClick={onTermClick} onTermSave={onTermSave} />
+                <VocabText text={line} onTermClick={onTermClick} onTermSave={onTermSave} />
               </li>
             ))}
           </ul>
@@ -375,7 +365,6 @@ export default function SummaryPanel({
             <li key={idx}>
               <VocabText 
                 text={point} 
-                viewMode={viewMode}
                 onTermClick={onTermClick}
                 onTermSave={onTermSave}
               />
