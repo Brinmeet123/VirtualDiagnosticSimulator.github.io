@@ -11,6 +11,7 @@ import PhysicalExamPanel from './PhysicalExamPanel'
 import TestsPanel from './TestsPanel'
 import DiagnosisPanel from './DiagnosisPanel'
 import SummaryPanel from './SummaryPanel'
+import SceneImage from './SceneImage'
 import SectionNav, { ClinicalSection } from './SectionNav'
 import HistoryHelperPanel from './HistoryHelperPanel'
 import SimulatorProgressBar from './simulator/SimulatorProgressBar'
@@ -450,6 +451,13 @@ export default function ScenarioPlayer({ scenario }: Props) {
             <span className="text-blue-700 font-medium">Temp:</span> {scenario.patientPersona.vitals.temperature}
           </div>
         </div>
+      </div>
+
+      <div className="mb-6">
+        <SceneImage
+          image={scenario.sceneImage ?? '/scenarios/default.jpg'}
+          title={scenario.title}
+        />
       </div>
 
       {/* Section Navigation */}
