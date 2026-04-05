@@ -443,6 +443,27 @@ export default function ScenarioPlayer({ scenario }: Props) {
         </p>
       </div>
 
+      <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <h3 className="font-semibold text-blue-900 mb-2">Vital Signs</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 text-sm">
+          <div>
+            <span className="text-blue-700 font-medium">HR:</span> {scenario.patientPersona.vitals.heartRate} bpm
+          </div>
+          <div>
+            <span className="text-blue-700 font-medium">BP:</span> {scenario.patientPersona.vitals.bloodPressure}
+          </div>
+          <div>
+            <span className="text-blue-700 font-medium">RR:</span> {scenario.patientPersona.vitals.respiratoryRate} /min
+          </div>
+          <div>
+            <span className="text-blue-700 font-medium">O2 Sat:</span> {scenario.patientPersona.vitals.oxygenSat}
+          </div>
+          <div>
+            <span className="text-blue-700 font-medium">Temp:</span> {scenario.patientPersona.vitals.temperature}
+          </div>
+        </div>
+      </div>
+
       {/* Section Navigation */}
       <SectionNav
         active={activeSection}
