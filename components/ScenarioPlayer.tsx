@@ -452,7 +452,9 @@ export default function ScenarioPlayer({ scenario }: Props) {
         </div>
       </div>
 
-      <DoctorPatientScene patientName={scenario.patientPersona.name} onPatientClick={scrollToChat} />
+      {activeSection === 'history' && (
+        <DoctorPatientScene patientName={scenario.patientPersona.name} onPatientClick={scrollToChat} />
+      )}
 
       {/* Section Navigation */}
       <SectionNav
