@@ -11,7 +11,6 @@ import PhysicalExamPanel from './PhysicalExamPanel'
 import TestsPanel from './TestsPanel'
 import DiagnosisPanel from './DiagnosisPanel'
 import SummaryPanel from './SummaryPanel'
-import SceneImage from './SceneImage'
 import SectionNav, { ClinicalSection } from './SectionNav'
 import HistoryHelperPanel from './HistoryHelperPanel'
 import SimulatorProgressBar from './simulator/SimulatorProgressBar'
@@ -453,12 +452,7 @@ export default function ScenarioPlayer({ scenario }: Props) {
         </div>
       </div>
 
-      <div className="mb-6">
-        <SceneImage
-          image={scenario.sceneImage ?? '/scenarios/default.jpg'}
-          title={scenario.title}
-        />
-      </div>
+      <DoctorPatientScene patientName={scenario.patientPersona.name} onPatientClick={scrollToChat} />
 
       {/* Section Navigation */}
       <SectionNav
@@ -476,8 +470,6 @@ export default function ScenarioPlayer({ scenario }: Props) {
             footerHint="When you're ready, continue to the exam — you can return to this tab anytime."
           />
 
-          <DoctorPatientScene patientName={scenario.patientPersona.name} onPatientClick={scrollToChat} />
-          
           {/* Mobile: Tabbed View */}
           {isMobile ? (
             <div className="mb-6">
