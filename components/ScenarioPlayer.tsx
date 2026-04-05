@@ -437,10 +437,6 @@ export default function ScenarioPlayer({ scenario }: Props) {
         <p className="text-sm font-semibold text-primary-700 mb-1">Active case</p>
         <h1 className="text-3xl font-bold text-gray-900 mb-2">{scenario.title}</h1>
         <p className="text-lg text-slate-700 leading-relaxed">{scenario.description}</p>
-        <p className="mt-3 rounded-lg border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm text-slate-700">
-          <span className="font-medium text-slate-900">What happens next: </span>
-          Interview → physical exam → tests → your diagnosis → a scored report with feedback.
-        </p>
       </div>
 
       <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
@@ -479,13 +475,6 @@ export default function ScenarioPlayer({ scenario }: Props) {
             description="Gather the story before you examine or order tests."
             footerHint="When you're ready, continue to the exam — you can return to this tab anytime."
           />
-
-          <div className="mb-4 rounded-xl border border-primary-200 bg-gradient-to-r from-primary-50 to-sky-50 px-4 py-3 shadow-sm">
-            <h2 className="text-lg font-semibold text-slate-900">🗣️ Ask Questions to Diagnose</h2>
-            <p className="text-sm text-slate-700 mt-1">
-              Use the suggested questions or type your own to gather information.
-            </p>
-          </div>
 
           <DoctorPatientScene patientName={scenario.patientPersona.name} onPatientClick={scrollToChat} />
           
@@ -526,7 +515,7 @@ export default function ScenarioPlayer({ scenario }: Props) {
                   />
                 </div>
               ) : (
-                <div id="chat-panel" className="relative">
+                <div id="chat-panel">
                   <ChatPanel
                     scenario={scenario}
                     messages={chatMessages}
@@ -535,12 +524,6 @@ export default function ScenarioPlayer({ scenario }: Props) {
                     onTermClick={handleTermClick}
                     onTermSave={handleTermSave}
                   />
-                  <div className="pointer-events-none absolute top-2 right-2 z-10 hidden max-w-[13rem] md:block">
-                    <div className="pointer-events-auto rounded-2xl border border-sky-200 bg-white/95 px-3 py-2.5 text-xs text-slate-600 shadow-md backdrop-blur-sm leading-snug">
-                      💡 <span className="font-medium text-slate-800">Tip:</span> Start with symptoms, duration, and
-                      medical history.
-                    </div>
-                  </div>
                 </div>
               )}
             </div>
@@ -559,7 +542,7 @@ export default function ScenarioPlayer({ scenario }: Props) {
 
                 {/* Right Panel: Chat */}
                 <div className="flex-1 bg-white rounded-lg overflow-hidden p-4 flex flex-col">
-                  <div id="chat-panel" className="relative flex-1 min-h-0">
+                  <div id="chat-panel" className="flex-1 min-h-0">
                     <ChatPanel
                       scenario={scenario}
                       messages={chatMessages}
@@ -568,12 +551,6 @@ export default function ScenarioPlayer({ scenario }: Props) {
                       onTermClick={handleTermClick}
                       onTermSave={handleTermSave}
                     />
-                    <div className="pointer-events-none absolute top-2 right-2 z-10 hidden max-w-[13rem] xl:block">
-                      <div className="pointer-events-auto rounded-2xl border border-sky-200 bg-white/95 px-3 py-2.5 text-xs text-slate-600 shadow-md backdrop-blur-sm leading-snug">
-                        💡 <span className="font-medium text-slate-800">Tip:</span> Start with symptoms, duration, and
-                        medical history.
-                      </div>
-                    </div>
                   </div>
                 </div>
               </div>

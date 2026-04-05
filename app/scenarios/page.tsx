@@ -10,23 +10,27 @@ export default async function ScenariosPage() {
     { status: string; bestScore: number | null; lastAttemptScore: number | null }
   > = {}
   if (session?.user?.id) {
-    const summaries = await getScenarioSummariesForUser(
-      session.user.id,
-      scenarios.map((s) => s.id)
-    )
-    progressByScenario = Object.fromEntries(
-      scenarios.map((s) => {
-        const sum = summaries.get(s.id)!
-        return [
-          s.id,
-          {
-            status: sum.displayStatus,
-            bestScore: sum.bestScore,
-            lastAttemptScore: sum.lastAttemptScore,
-          },
-        ]
-      })
-    )
+    try {
+      const summaries = await getScenarioSummariesForUser(
+        session.user.id,
+        scenarios.map((s) => s.id)
+      )
+      progressByScenario = Object.fromEntries(
+        scenarios.map((s) => {
+          const sum = summaries.get(s.id)!
+          return [
+            s.id,
+            {
+              status: sum.displayStatus,
+              bestScore: sum.bestScore,
+              lastAttemptScore: sum.lastAttemptScore,
+            },
+          ]
+        })
+      )
+    } catch (e) {
+      console.error('[scenarios] progress load failed (cases still listed):', e)
+    }
   }
 
   return <ScenarioList scenarios={scenarios} progressByScenario={progressByScenario} />
