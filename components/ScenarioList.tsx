@@ -4,7 +4,6 @@ import { useState, useMemo } from 'react'
 import { Scenario, ScenarioDifficulty } from '@/data/scenarios'
 import ScenarioCard from './ScenarioCard'
 import SimulatorHelpButton from './simulator/SimulatorHelpButton'
-import NextStepGuidance from './ux/NextStepGuidance'
 
 export type ScenarioProgressInfo = {
   status: string
@@ -85,12 +84,6 @@ export default function ScenarioList({ scenarios, progressByScenario = {} }: Pro
         <p className="text-sm text-gray-600">
           Showing {filteredScenarios.length} of {scenarios.length} scenarios
         </p>
-
-        <div className="mt-6 max-w-xl">
-          <NextStepGuidance compact>
-            Ask a few more questions — then head to the exam when you feel ready.
-          </NextStepGuidance>
-        </div>
       </div>
 
       {filteredScenarios.length === 0 ? (

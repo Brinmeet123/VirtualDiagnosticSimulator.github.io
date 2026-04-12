@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import NextStepGuidance from '@/components/ux/NextStepGuidance'
 
 export default function Home() {
   return (
@@ -30,11 +29,6 @@ export default function Home() {
             >
               View Progress
             </Link>
-          </div>
-          <div className="mt-10 max-w-lg mx-auto text-left">
-            <NextStepGuidance compact>
-              Ask a few more questions — then head to the exam when you feel ready.
-            </NextStepGuidance>
           </div>
         </div>
       </section>

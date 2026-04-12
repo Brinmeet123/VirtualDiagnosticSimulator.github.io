@@ -11,11 +11,14 @@ import PhysicalExamPanel from './PhysicalExamPanel'
 import TestsPanel from './TestsPanel'
 import DiagnosisPanel from './DiagnosisPanel'
 import SummaryPanel from './SummaryPanel'
-import SectionNav, { ClinicalSection } from './SectionNav'
+import SectionNav, {
+  ClinicalSection,
+  clinicalSectionToStep,
+  SECTION_STEP_COUNT,
+} from './SectionNav'
 import HistoryHelperPanel from './HistoryHelperPanel'
-import SimulatorProgressBar from './simulator/SimulatorProgressBar'
-import type { SimulatorStep } from './simulator/SimulatorProgressBar'
-import ScenarioSectionHeader from './ux/ScenarioSectionHeader'
+import ScenarioSectionHeader, { getScenarioSectionGuidanceLine } from './ux/ScenarioSectionHeader'
+import NextStepGuidance from './ux/NextStepGuidance'
 
 type Message = {
   role: 'doctor' | 'patient'
@@ -88,6 +91,25 @@ type PersistedState = {
   differential: DifferentialItem[]
   finalDiagnosisId: string | null
   activeSection: ClinicalSection
+  /** 1–5, highest step the learner may open (linear unlock). */
+  maxUnlockedStep?: number
+}
+
+function inferMaxUnlockedStepFromLegacy(state: {
+  activeSection?: ClinicalSection
+  viewedExamSections?: string[]
+  orderedTests?: [string, OrderedTestData][]
+  finalDiagnosisId?: string | null
+}): number {
+  const active = state.activeSection ?? 'history'
+  let m = clinicalSectionToStep(active)
+  const viewed = state.viewedExamSections?.length ?? 0
+  const tests = state.orderedTests?.length ?? 0
+  if (viewed > 0) m = Math.max(m, 2)
+  if (tests > 0) m = Math.max(m, 3)
+  if (viewed > 0 && tests > 0) m = Math.max(m, 4)
+  if (state.finalDiagnosisId != null || active === 'debrief') m = Math.max(m, 5)
+  return Math.min(SECTION_STEP_COUNT, Math.max(1, m))
 }
 
 export default function ScenarioPlayer({ scenario }: Props) {
@@ -95,6 +117,7 @@ export default function ScenarioPlayer({ scenario }: Props) {
   const [attemptId, setAttemptId] = useState<string | null>(null)
   const [scenarioScore, setScenarioScore] = useState<ScenarioScoreState | null>(null)
   const [activeSection, setActiveSection] = useState<ClinicalSection>('history')
+  const [maxUnlockedStep, setMaxUnlockedStep] = useState(1)
   const [chatMessages, setChatMessages] = useState<Message[]>([
     {
       role: 'patient',
@@ -150,6 +173,15 @@ export default function ScenarioPlayer({ scenario }: Props) {
             if (Array.isArray(st.differential)) setDifferential(st.differential)
             if (st.finalDiagnosisId !== undefined) setFinalDiagnosisId(st.finalDiagnosisId)
             if (st.activeSection) setActiveSection(st.activeSection)
+            if (
+              typeof st.maxUnlockedStep === 'number' &&
+              st.maxUnlockedStep >= 1 &&
+              st.maxUnlockedStep <= SECTION_STEP_COUNT
+            ) {
+              setMaxUnlockedStep(st.maxUnlockedStep)
+            } else {
+              setMaxUnlockedStep(inferMaxUnlockedStepFromLegacy(st))
+            }
           }
         }
       } catch (e) {
@@ -161,6 +193,15 @@ export default function ScenarioPlayer({ scenario }: Props) {
     }
   }, [sessionStatus, session?.user?.id, scenario.id])
 
+  const canAccessDiagnosis = viewedExamSections.length > 0 && orderedTests.size > 0
+  const canAccessDebrief = finalDiagnosisId !== null
+
+  useEffect(() => {
+    if (canAccessDebrief) {
+      setMaxUnlockedStep((m) => Math.max(m, SECTION_STEP_COUNT))
+    }
+  }, [canAccessDebrief])
+
   // Persist messages + UI state for resume
   useEffect(() => {
     if (sessionStatus !== 'authenticated' || !attemptId) return
@@ -171,6 +212,7 @@ export default function ScenarioPlayer({ scenario }: Props) {
         differential,
         finalDiagnosisId,
         activeSection,
+        maxUnlockedStep,
       }
       void fetch('/api/scenario/attempt', {
         method: 'PATCH',
@@ -191,6 +233,7 @@ export default function ScenarioPlayer({ scenario }: Props) {
     differential,
     finalDiagnosisId,
     activeSection,
+    maxUnlockedStep,
     attemptId,
     scenario.id,
     sessionStatus,
@@ -241,6 +284,7 @@ export default function ScenarioPlayer({ scenario }: Props) {
   }) => {
     // State is already updated via onDifferentialUpdate and onFinalDxUpdate
     setIsLoadingAssessment(true)
+    setMaxUnlockedStep((m) => Math.max(m, SECTION_STEP_COUNT))
     setActiveSection('debrief')
 
     const completeScoring = async (aid: string | null) => {
@@ -363,65 +407,18 @@ export default function ScenarioPlayer({ scenario }: Props) {
     chatElement?.scrollIntoView({ behavior: 'smooth', block: 'start' })
   }
 
-  // Navigation rules: determine which sections are accessible
-  const canAccessDiagnosis = viewedExamSections.length > 0 && orderedTests.size > 0
-  const canAccessDebrief = finalDiagnosisId !== null
-
   const doctorTurns = chatMessages.filter((m) => m.role === 'doctor').length
-  const learnerStep: SimulatorStep =
-    activeSection === 'history'
-      ? 1
-      : activeSection === 'exam'
-        ? 2
-        : activeSection === 'tests'
-          ? 3
-          : activeSection === 'diagnosis'
-            ? 4
-            : 5
-
-  const sections = [
-    {
-      id: 'history' as ClinicalSection,
-      label: 'Interview',
-      disabled: false,
-    },
-    {
-      id: 'exam' as ClinicalSection,
-      label: 'Exam',
-      disabled: false,
-    },
-    {
-      id: 'tests' as ClinicalSection,
-      label: 'Tests',
-      disabled: false,
-    },
-    {
-      id: 'diagnosis' as ClinicalSection,
-      label: 'Diagnosis',
-      disabled: !canAccessDiagnosis,
-      disabledReason: 'Open the exam and order at least one test first.',
-    },
-    {
-      id: 'debrief' as ClinicalSection,
-      label: 'Results',
-      disabled: !canAccessDebrief,
-      disabledReason: 'Choose a final diagnosis and submit to see your report.',
-    },
-  ]
 
   const handleSectionChange = (section: ClinicalSection) => {
-    // Prevent navigation to blocked sections
-    const sectionInfo = sections.find(s => s.id === section)
-    if (sectionInfo?.disabled) {
-      return
-    }
+    const step = clinicalSectionToStep(section)
+    if (step > maxUnlockedStep) return
+    if (section === 'diagnosis' && !canAccessDiagnosis) return
+    if (section === 'debrief' && !canAccessDebrief) return
     setActiveSection(section)
   }
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <SimulatorProgressBar currentStep={learnerStep} className="mb-10" />
-
       <div className="mb-10">
         <p className="text-xs font-medium uppercase tracking-wide text-slate-500 mb-2">Active case</p>
         <h1 className="text-3xl font-bold text-gray-900 mb-3">{scenario.title}</h1>
@@ -429,7 +426,7 @@ export default function ScenarioPlayer({ scenario }: Props) {
       </div>
 
       <div className="mb-10 border-b border-slate-200 pb-8">
-        <p className="text-xs font-medium uppercase tracking-wide text-slate-500 mb-3">Vitals</p>
+        <h3 className="font-semibold text-blue-900 mb-3">Vital Signs</h3>
         <div className="flex flex-wrap gap-x-8 gap-y-2 text-sm text-slate-700">
           <span><span className="text-slate-500">HR</span> {scenario.patientPersona.vitals.heartRate} bpm</span>
           <span><span className="text-slate-500">BP</span> {scenario.patientPersona.vitals.bloodPressure}</span>
@@ -446,8 +443,10 @@ export default function ScenarioPlayer({ scenario }: Props) {
       {/* Section Navigation */}
       <SectionNav
         active={activeSection}
+        maxUnlockedStep={maxUnlockedStep}
         onChange={handleSectionChange}
-        sections={sections}
+        canAccessDiagnosis={canAccessDiagnosis}
+        canAccessDebrief={canAccessDebrief}
       />
 
       <ScenarioSectionHeader section={activeSection} />
@@ -534,10 +533,14 @@ export default function ScenarioPlayer({ scenario }: Props) {
             </div>
           )}
 
-          <div className="mt-10">
+          <div className="mt-10 max-w-xl space-y-3">
+            <NextStepGuidance compact>{getScenarioSectionGuidanceLine('history')}</NextStepGuidance>
             <button
               type="button"
-              onClick={() => setActiveSection('exam')}
+              onClick={() => {
+                setMaxUnlockedStep((m) => Math.max(m, 2))
+                setActiveSection('exam')
+              }}
               className="btn-press w-full rounded-lg bg-primary-600 px-4 py-3 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 sm:w-auto sm:min-w-[11rem]"
             >
               Continue
@@ -556,10 +559,14 @@ export default function ScenarioPlayer({ scenario }: Props) {
             onTermClick={handleTermClick}
             onTermSave={handleTermSave}
           />
-          <div className="mt-10">
+          <div className="mt-10 max-w-xl space-y-3">
+            <NextStepGuidance compact>{getScenarioSectionGuidanceLine('exam')}</NextStepGuidance>
             <button
               type="button"
-              onClick={() => setActiveSection('tests')}
+              onClick={() => {
+                setMaxUnlockedStep((m) => Math.max(m, 3))
+                setActiveSection('tests')
+              }}
               className="btn-press w-full rounded-lg bg-primary-600 px-4 py-3 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 sm:w-auto sm:min-w-[11rem]"
             >
               Continue
@@ -577,13 +584,18 @@ export default function ScenarioPlayer({ scenario }: Props) {
             onTermClick={handleTermClick}
             onTermSave={handleTermSave}
           />
-          <div className="mt-10 flex flex-col items-start gap-2">
+          <div className="mt-10 flex max-w-xl flex-col items-stretch gap-3">
+            <NextStepGuidance compact>{getScenarioSectionGuidanceLine('tests')}</NextStepGuidance>
             {!canAccessDiagnosis && (
               <p className="text-xs text-slate-500">Open the exam and order a test to continue.</p>
             )}
             <button
               type="button"
-              onClick={() => setActiveSection('diagnosis')}
+              onClick={() => {
+                if (!canAccessDiagnosis) return
+                setMaxUnlockedStep((m) => Math.max(m, 4))
+                setActiveSection('diagnosis')
+              }}
               disabled={!canAccessDiagnosis}
               title={
                 canAccessDiagnosis

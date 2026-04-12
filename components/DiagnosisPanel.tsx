@@ -5,6 +5,8 @@ import { Scenario } from '@/data/scenarios'
 import { diagnosisCatalog, DxCategory } from '@/data/diagnosisCatalog'
 import { resolveDx, checkMissingMustNotMiss } from '@/lib/dxEngine'
 import VocabText from './VocabText'
+import NextStepGuidance from './ux/NextStepGuidance'
+import { getScenarioSectionGuidanceLine } from './ux/ScenarioSectionHeader'
 
 type DifferentialItem = {
   dxId: string
@@ -403,14 +405,17 @@ export default function DiagnosisPanel({
         )}
       </div>
 
-      <button
-        type="button"
-        onClick={handleSubmit}
-        disabled={!finalDxId || differential.length === 0}
-        className="btn-press w-full mt-6 px-6 py-3 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition font-semibold"
-      >
-        Submit Diagnosis
-      </button>
+      <div className="mt-6 max-w-xl space-y-3">
+        <NextStepGuidance compact>{getScenarioSectionGuidanceLine('diagnosis')}</NextStepGuidance>
+        <button
+          type="button"
+          onClick={handleSubmit}
+          disabled={!finalDxId || differential.length === 0}
+          className="btn-press w-full px-6 py-3 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition font-semibold"
+        >
+          Submit Diagnosis
+        </button>
+      </div>
     </div>
   )
 }

@@ -26,6 +26,10 @@ const COPY: Record<ClinicalSection, { line: string; tips: string[] }> = {
   },
 }
 
+export function getScenarioSectionGuidanceLine(section: ClinicalSection): string {
+  return COPY[section].line
+}
+
 type Props = {
   section: ClinicalSection
   className?: string
