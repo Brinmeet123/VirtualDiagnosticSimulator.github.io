@@ -317,24 +317,21 @@ export function getMockAssessment() {
   return {
     overallRating: 'Good',
     summary:
-      'You demonstrated solid clinical reasoning throughout this case. You gathered relevant history, performed an appropriate exam, and selected reasonable tests. Your differential diagnosis showed good consideration of multiple possibilities. There are some areas where you could improve, such as exploring more red flags and refining your test selection efficiency.',
+      'Sample case. Score 71/100 (good). About 60% of suggested history topics covered. Teaching diagnosis: see scenario.',
     strengths: [
       'Thorough history-taking approach',
       'Appropriate physical exam sections reviewed',
       'Considered multiple diagnostic possibilities',
-      'Good patient communication',
+      'Good test prioritization in parts of the workup',
     ],
     areasForImprovement: [
-      'Could explore more red flag symptoms systematically',
-      'Some tests may have been unnecessary - consider efficiency',
-      'Differential diagnosis could benefit from more specific reasoning notes',
-      'Consider asking about family history earlier in the encounter',
+      'Explore red flag symptoms in a more systematic way',
+      'Tighten test selection to improve efficiency',
+      'Add more specific reasoning notes on the differential',
     ],
-    diagnosisFeedback:
-      'Your differential diagnosis included relevant possibilities. You correctly identified the most likely diagnosis and ranked your differential appropriately. Consider being more explicit in your reasoning notes to demonstrate your clinical thinking process.',
+    diagnosisFeedback: 'Teaching diagnosis noted in case overview.',
     missedKeyHistoryPoints: ['Family history of cardiac disease'],
-    testSelectionFeedback:
-      "You selected several high-yield tests that are appropriate for this presentation. Some tests may have been ordered as a 'shotgun' approach rather than being targeted. In a real clinical setting, efficiency is important - consider whether each test truly changes your management or adds critical information.",
+    testSelectionFeedback: 'Include critical confirmatory tests; avoid low-yield shotgun panels.',
     sectionRatings: {
       history: 'Good',
       exam: 'Good',
@@ -342,15 +339,47 @@ export function getMockAssessment() {
       diagnosis: 'Good',
       communication: 'Good',
     },
-    totalScore: 32,
+    totalScore: 71,
     totalScorePercentage: 71,
-    maxScore: 45,
+    maxScore: 100,
+    rubric100: {
+      historyTaking: 18,
+      clinicalReasoning: 17,
+      diagnosticAccuracy: 19,
+      efficiencyAndQuestionSelection: 17,
+      total: 71,
+    },
     scoreBreakdown: {
       history: 8,
       exam: 7,
       tests: 10,
       diagnosis: 5,
       communication: 2,
+    },
+    debriefStructured: {
+      summary: 'Sample case. Score 71/100 (good).',
+      strengths: [
+        'Thorough history-taking approach',
+        'Appropriate physical exam sections reviewed',
+        'Considered multiple diagnostic possibilities',
+        'Good test prioritization in parts of the workup',
+      ],
+      missedOpportunities: [
+        'Explore red flag symptoms in a more systematic way',
+        'Tighten test selection to improve efficiency',
+        'Add more specific reasoning notes on the differential',
+      ],
+      correctApproach: [
+        'Use the history and exam to establish pretest probability before testing.',
+        'Anchor the differential in dangerous diagnoses you can rule in or out with targeted data.',
+        'Confirm the working diagnosis with findings that fit the clinical picture.',
+      ],
+      improvementTip:
+        'Next time, focus on asking about family history of early cardiac disease earlier to narrow the diagnosis faster.',
+      diagnosticReasoning: [],
+      nextStepAdvice: [],
+      clinicalPearls: [],
+      vocabToReview: [],
     },
   }
 }

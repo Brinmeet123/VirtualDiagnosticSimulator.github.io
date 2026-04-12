@@ -22,6 +22,8 @@ export async function maybePolishDeterministicAssessment(
     summary: d.summary,
     strengths: d.strengths,
     missedOpportunities: d.missedOpportunities,
+    correctApproach: d.correctApproach,
+    improvementTip: d.improvementTip,
     diagnosticReasoning: d.diagnosticReasoning,
     nextStepAdvice: d.nextStepAdvice,
     clinicalPearls: d.clinicalPearls,
@@ -31,7 +33,7 @@ export async function maybePolishDeterministicAssessment(
   const system = `You are an editor. You receive JSON with debrief strings from a medical simulator.
 Rewrite values for clearer, more natural prose only.
 Rules: Do NOT add new facts, diagnoses, or recommendations. Do NOT remove items from arrays—keep the same length for each array. Do not change vocabToReview terms (return them unchanged).
-Output ONLY valid JSON with the same keys: summary (string), strengths (array), missedOpportunities (array), diagnosticReasoning (array), nextStepAdvice (array), clinicalPearls (array), vocabToReview (array).`
+Output ONLY valid JSON with the same keys: summary (string), strengths (array), missedOpportunities (array), correctApproach (array), improvementTip (string), diagnosticReasoning (array), nextStepAdvice (array), clinicalPearls (array), vocabToReview (array).`
 
   try {
     const text = await callLLM([
@@ -56,6 +58,13 @@ Output ONLY valid JSON with the same keys: summary (string), strengths (array), 
         missedOpportunities: Array.isArray(parsed.missedOpportunities)
           ? parsed.missedOpportunities
           : d.missedOpportunities,
+        correctApproach: Array.isArray((parsed as typeof payload).correctApproach)
+          ? (parsed as typeof payload).correctApproach
+          : d.correctApproach,
+        improvementTip:
+          typeof (parsed as typeof payload).improvementTip === 'string'
+            ? (parsed as typeof payload).improvementTip
+            : d.improvementTip,
         diagnosticReasoning: Array.isArray(parsed.diagnosticReasoning)
           ? parsed.diagnosticReasoning
           : d.diagnosticReasoning,

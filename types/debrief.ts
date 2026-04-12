@@ -34,10 +34,24 @@ export type DebriefInput = {
   differentialLength: number
 }
 
+/** Post-scenario score out of 100, split evenly across four domains. */
+export type DebriefRubric100 = {
+  historyTaking: number
+  clinicalReasoning: number
+  diagnosticAccuracy: number
+  efficiencyAndQuestionSelection: number
+  total: number
+}
+
 export type DebriefOutput = {
   summary: string
   strengths: string[]
   missedOpportunities: string[]
+  /** Teaching-focused steps (2–4 concise bullets). */
+  correctApproach: string[]
+  /** One short actionable line for the next run. */
+  improvementTip: string
+  /** Legacy shape; kept for optional polish pipeline compatibility. */
   diagnosticReasoning: string[]
   nextStepAdvice: string[]
   clinicalPearls: string[]
@@ -77,6 +91,8 @@ export type DeterministicAssessment = {
   totalScore: number
   totalScorePercentage: number
   maxScore: number
+  /** Canonical score out of 100 (four categories × 25). */
+  rubric100: DebriefRubric100
   scoreBreakdown: {
     history: number
     exam: number

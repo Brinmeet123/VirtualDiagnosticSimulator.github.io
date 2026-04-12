@@ -38,57 +38,17 @@ export async function POST(request: NextRequest) {
     }
 
     if (USE_DEMO_MOCKS) {
-      const mockAssessment = getMockAssessment()
-      let totalScore = 0
-      const scoreBreakdown: Record<string, number> = {}
-
-      if (orderedTests && orderedTests.length > 0) {
-        const { resolveTest, calculateTestScore } = await import('@/lib/testEngine')
-        const testScore = orderedTests.reduce((sum: number, testId: string) => {
-          try {
-            const resolved = resolveTest(scenario, testId)
-            return sum + calculateTestScore(resolved.yield)
-          } catch {
-            return sum
-          }
-        }, 0)
-        scoreBreakdown.tests = testScore
-        totalScore += testScore
-      }
-
-      if (differentialDetailed && differentialDetailed.length > 0) {
-        const { resolveDx, calculateDxScore, calculateFinalDxScore, calculateEfficiencyPenalty, checkMissingMustNotMiss } =
-          await import('@/lib/dxEngine')
-        const dxScore = differentialDetailed.reduce((sum: number, item: { dxId: string }) => {
-          try {
-            const resolved = resolveDx(scenario, item.dxId)
-            return sum + calculateDxScore(resolved.yield)
-          } catch {
-            return sum
-          }
-        }, 0)
-        const finalScore = calculateFinalDxScore(finalDxId, scenario.finalDxId)
-        const efficiencyPenalty = calculateEfficiencyPenalty(differentialDetailed.length)
-        const missing = checkMissingMustNotMiss(
-          differentialDetailed.map((d: { dxId: string }) => d.dxId),
-          scenario.requiredMustNotMiss
-        )
-        const missingPenalty = missing.length * -3
-        scoreBreakdown.diagnosis = dxScore + finalScore + efficiencyPenalty + missingPenalty
-        totalScore += scoreBreakdown.diagnosis
-      }
-
-      const maxScore = 45
-      const scorePercentage = Math.max(0, Math.min(100, Math.round((totalScore / maxScore) * 100)))
-
-      return NextResponse.json({
-        ...mockAssessment,
-        totalScore,
-        totalScorePercentage: scorePercentage,
-        maxScore,
-        scoreBreakdown,
-        source: 'demo-mock',
+      const deterministic = buildDeterministicAssessment({
+        scenarioId,
+        chat,
+        viewedExamSections,
+        orderedTests,
+        differentialDetailed,
+        finalDxId,
+        redFlagsFound,
       })
+      const out = await maybePolishDeterministicAssessment(deterministic)
+      return NextResponse.json({ ...out, source: 'demo-mock' })
     }
 
     void stability

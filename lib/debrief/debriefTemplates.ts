@@ -19,15 +19,15 @@ export function buildSummary(params: {
   correctDx: string
   finalDxId: string | null | undefined
   correctDxId: string | undefined
-  percent: number
+  totalOutOf100: number
   askedRatio: number
 }): string {
-  const { scenarioTitle, correctDx, finalDxId, correctDxId, percent, askedRatio } = params
+  const { scenarioTitle, correctDx, finalDxId, correctDxId, totalOutOf100, askedRatio } = params
   const correct = finalDxId && correctDxId && finalDxId === correctDxId
   const dxLine = correct
-    ? `You selected the expected diagnosis (${correctDx}).`
-    : `Your final diagnosis differed from the teaching diagnosis (${correctDx}). Focus on the key data that supported that diagnosis.`
-  return `Case: ${scenarioTitle}. Overall performance was ${ratingLabel(percent).toLowerCase()} (${percent}% of the reference scale). You explored roughly ${Math.round(askedRatio * 100)}% of the suggested history topics. ${dxLine}`
+    ? `Expected diagnosis: ${correctDx}.`
+    : `Teaching diagnosis: ${correctDx}.`
+  return `${scenarioTitle}. Score ${totalOutOf100}/100 (${ratingLabel(totalOutOf100).toLowerCase()}). About ${Math.round(askedRatio * 100)}% of suggested history topics covered. ${dxLine}`
 }
 
 export function buildStrengths(
@@ -64,7 +64,7 @@ export function buildStrengths(
   if (out.length === 0) {
     out.push('You completed the encounter and submitted a differential and final diagnosis for review.')
   }
-  return out
+  return out.slice(0, 4)
 }
 
 export function buildMissedOpportunities(
@@ -116,47 +116,63 @@ export function buildMissedOpportunities(
     }
   }
   const uniq = [...new Set(missed)]
-  return uniq.slice(0, 8)
+  return uniq.slice(0, 4)
 }
 
-export function buildDiagnosticReasoning(
+/** 2–4 concise bullets: how the case should be framed (no long paragraphs). */
+export function buildCorrectApproach(
   input: DebriefInput,
   config: ScenarioDebriefConfig,
   finalMatchesCorrect: boolean
 ): string[] {
   const lines: string[] = []
-  for (const line of config.correctDiagnosisExplanation) {
-    lines.push(line)
+  for (const line of config.correctDiagnosisExplanation.slice(0, 3)) {
+    const t = line.trim()
+    if (t) lines.push(t)
   }
-  if (finalMatchesCorrect) {
-    lines.push('Your final diagnosis matches the teaching case diagnosis.')
-  } else {
-    lines.push(
-      `The teaching diagnosis was ${input.correctDiagnosis}. Revisit the history, exam, and test pattern that best supports that entity.`
-    )
-  }
-  for (const row of config.differentialComparison) {
+  if (lines.length < 3 && config.differentialComparison.length > 0) {
+    const row = config.differentialComparison[0]
     lines.push(`${row.diagnosis}: ${row.whyLessLikely}`)
   }
-  return lines
+  if (!finalMatchesCorrect) {
+    lines.push(
+      `Weigh the pattern of history, exam, and tests against ${input.correctDiagnosis} as the teaching diagnosis.`
+    )
+  } else if (lines.length < 2) {
+    lines.push('The teaching diagnosis matches your final choice; use the bullets above to reinforce the clinical story.')
+  }
+  const uniq = [...new Set(lines)]
+  return uniq.slice(0, 4)
 }
 
-export function buildNextStepAdvice(
+/** Optional polish pipeline only — keep parallel to correctApproach when non-empty. */
+export function buildDiagnosticReasoning(
   input: DebriefInput,
-  missedHistoryPoints: string[]
+  config: ScenarioDebriefConfig,
+  finalMatchesCorrect: boolean
 ): string[] {
-  const tips: string[] = []
+  return buildCorrectApproach(input, config, finalMatchesCorrect)
+}
+
+export function buildImprovementTip(input: DebriefInput, missedHistoryPoints: string[]): string {
   if (missedHistoryPoints.length > 0) {
-    tips.push(`Review these history elements: ${missedHistoryPoints.slice(0, 4).join('; ')}.`)
+    const hint = missedHistoryPoints[0].trim()
+    const short = hint.length > 90 ? `${hint.slice(0, 87)}…` : hint
+    return `Next time, focus on asking about ${short} earlier to narrow the diagnosis faster.`
   }
   if (input.missingMustNotMissDxIds.length > 0) {
-    tips.push(
-      'Practice adding life-threatening diagnoses to the differential early, then narrow with data.'
-    )
+    return 'Next time, add must-not-miss diagnoses to the differential early, then let results narrow the list.'
+  }
+  if (input.unnecessaryTests.length > 0) {
+    return 'Next time, favor high-yield tests and skip orders that are unlikely to change your next step.'
   }
   if (input.differentialLength > 8) {
-    tips.push('Tighten the differential: prioritize by pre-test probability and danger.')
+    return 'Next time, keep the differential short and rank by pretest probability and risk.'
   }
-  tips.push('Re-run the case with a focused checklist for history → exam → testing → synthesis.')
-  return tips
+  return 'Next time, move in sequence: targeted history, focused exam, then tests that change management.'
+}
+
+/** Legacy array for polish compatibility — single tip as one element. */
+export function buildNextStepAdvice(input: DebriefInput, missedHistoryPoints: string[]): string[] {
+  return [buildImprovementTip(input, missedHistoryPoints)]
 }

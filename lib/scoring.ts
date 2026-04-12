@@ -1,10 +1,11 @@
 import type { Scenario } from '@/data/scenarios'
 
+/** Aligned with post-scenario debrief: four categories out of 25 each (total 100). */
 export type RubricBreakdown = {
-  diagnosis: number
-  questioning: number
-  reasoning: number
-  efficiency: number
+  historyTaking: number
+  clinicalReasoning: number
+  diagnosticAccuracy: number
+  efficiencyAndQuestionSelection: number
 }
 
 export type PerformanceEvaluation = {
@@ -29,6 +30,20 @@ const WEIGHTS = {
   reasoning: 25,
   efficiency: 10,
 } as const
+
+function mapToRubric100(parts: {
+  diagnosisPts: number
+  questioningPts: number
+  reasoningPts: number
+  efficiencyPts: number
+}): RubricBreakdown {
+  return {
+    historyTaking: Math.round(parts.questioningPts),
+    clinicalReasoning: Math.round(parts.reasoningPts),
+    diagnosticAccuracy: Math.round(parts.diagnosisPts * (25 / WEIGHTS.diagnosis)),
+    efficiencyAndQuestionSelection: Math.round(parts.efficiencyPts * (25 / WEIGHTS.efficiency)),
+  }
+}
 
 function clamp(n: number, min: number, max: number) {
   return Math.max(min, Math.min(max, n))
@@ -119,14 +134,20 @@ export function evaluatePerformance(
   efficiencyRatio = efficiencyRatio * 0.7 + 0.3 * clamp(examSeen / 3, 0, 1)
   const efficiencyPts = Math.round(WEIGHTS.efficiency * efficiencyRatio)
 
-  const rubric: RubricBreakdown = {
-    diagnosis: diagnosisPts,
-    questioning: questioningPts,
-    reasoning: reasoningPts,
-    efficiency: efficiencyPts,
-  }
+  const rubric = mapToRubric100({
+    diagnosisPts,
+    questioningPts,
+    reasoningPts,
+    efficiencyPts,
+  })
 
-  const score = rubric.diagnosis + rubric.questioning + rubric.reasoning + rubric.efficiency
+  const score = Math.min(
+    100,
+    rubric.historyTaking +
+      rubric.clinicalReasoning +
+      rubric.diagnosticAccuracy +
+      rubric.efficiencyAndQuestionSelection
+  )
   const level = scoreToLevel(score)
 
   const feedbackParts: string[] = []

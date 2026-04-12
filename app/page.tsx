@@ -7,7 +7,7 @@ export default function Home() {
         <div className="max-w-4xl mx-auto text-center">
           <p className="text-sm font-semibold uppercase tracking-wide text-primary-700 mb-3">Clinical simulation</p>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 mb-5 text-balance">
-            Think Like a Doctor
+            Virtual Diagnostic Simulator
           </h1>
           <p className="text-lg sm:text-xl text-gray-700 mb-3 max-w-2xl mx-auto leading-relaxed">
             Step into real-feel scenarios. Ask questions, analyze symptoms, and make the diagnosis.

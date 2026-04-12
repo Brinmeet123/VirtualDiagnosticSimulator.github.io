@@ -58,10 +58,19 @@ type AssessmentResult = {
     summary: string
     strengths: string[]
     missedOpportunities: string[]
+    correctApproach?: string[]
+    improvementTip?: string
     diagnosticReasoning: string[]
     nextStepAdvice: string[]
     clinicalPearls: string[]
     vocabToReview: string[]
+  }
+  rubric100?: {
+    historyTaking: number
+    clinicalReasoning: number
+    diagnosticAccuracy: number
+    efficiencyAndQuestionSelection: number
+    total: number
   }
   source?: string
 }
