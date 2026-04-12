@@ -405,18 +405,24 @@ export default function DiagnosisPanel({
         )}
       </div>
 
-      <div className="mt-6 max-w-xl space-y-3">
-        <NextStepGuidance compact showHeading={false}>
+      <div className="mt-6 mx-auto flex w-full max-w-xl justify-center px-2">
+        <NextStepGuidance
+          compact
+          showHeading={false}
+          centered
+          action={
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={!finalDxId || differential.length === 0}
+              className="btn-press w-full rounded-lg px-6 py-3 bg-primary-600 text-white hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition font-semibold"
+            >
+              Next step
+            </button>
+          }
+        >
           {getScenarioSectionGuidanceLine('diagnosis')}
         </NextStepGuidance>
-        <button
-          type="button"
-          onClick={handleSubmit}
-          disabled={!finalDxId || differential.length === 0}
-          className="btn-press w-full px-6 py-3 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition font-semibold"
-        >
-          Next step
-        </button>
       </div>
     </div>
   )

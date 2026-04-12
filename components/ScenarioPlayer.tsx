@@ -536,20 +536,26 @@ export default function ScenarioPlayer({ scenario }: Props) {
             </div>
           )}
 
-          <div className="mt-10 max-w-xl space-y-3">
-            <NextStepGuidance compact showHeading={false}>
+          <div className="mt-10 mx-auto flex w-full max-w-xl justify-center px-2">
+            <NextStepGuidance
+              compact
+              showHeading={false}
+              centered
+              action={
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMaxUnlockedStep((m) => Math.max(m, 2))
+                    setActiveSection('exam')
+                  }}
+                  className="btn-press w-full rounded-lg bg-primary-600 px-4 py-3 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700"
+                >
+                  Next step
+                </button>
+              }
+            >
               {getScenarioSectionGuidanceLine('history')}
             </NextStepGuidance>
-            <button
-              type="button"
-              onClick={() => {
-                setMaxUnlockedStep((m) => Math.max(m, 2))
-                setActiveSection('exam')
-              }}
-              className="btn-press w-full rounded-lg bg-primary-600 px-4 py-3 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 sm:w-auto sm:min-w-[11rem]"
-            >
-              Next step
-            </button>
           </div>
         </>
       )}
@@ -564,20 +570,26 @@ export default function ScenarioPlayer({ scenario }: Props) {
             onTermClick={handleTermClick}
             onTermSave={handleTermSave}
           />
-          <div className="mt-10 max-w-xl space-y-3">
-            <NextStepGuidance compact showHeading={false}>
+          <div className="mt-10 mx-auto flex w-full max-w-xl justify-center px-2">
+            <NextStepGuidance
+              compact
+              showHeading={false}
+              centered
+              action={
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMaxUnlockedStep((m) => Math.max(m, 3))
+                    setActiveSection('tests')
+                  }}
+                  className="btn-press w-full rounded-lg bg-primary-600 px-4 py-3 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700"
+                >
+                  Next step
+                </button>
+              }
+            >
               {getScenarioSectionGuidanceLine('exam')}
             </NextStepGuidance>
-            <button
-              type="button"
-              onClick={() => {
-                setMaxUnlockedStep((m) => Math.max(m, 3))
-                setActiveSection('tests')
-              }}
-              className="btn-press w-full rounded-lg bg-primary-600 px-4 py-3 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 sm:w-auto sm:min-w-[11rem]"
-            >
-              Next step
-            </button>
           </div>
         </>
       )}
@@ -591,30 +603,40 @@ export default function ScenarioPlayer({ scenario }: Props) {
             onTermClick={handleTermClick}
             onTermSave={handleTermSave}
           />
-          <div className="mt-10 flex max-w-xl flex-col items-stretch gap-3">
-            <NextStepGuidance compact showHeading={false}>
+          <div className="mt-10 mx-auto flex w-full max-w-xl justify-center px-2">
+            <NextStepGuidance
+              compact
+              showHeading={false}
+              centered
+              action={
+                <>
+                  {!canAccessDiagnosis && (
+                    <p className="mb-3 text-center text-xs text-slate-600">
+                      Open the exam and order a test to continue.
+                    </p>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (!canAccessDiagnosis) return
+                      setMaxUnlockedStep((m) => Math.max(m, 4))
+                      setActiveSection('diagnosis')
+                    }}
+                    disabled={!canAccessDiagnosis}
+                    title={
+                      canAccessDiagnosis
+                        ? undefined
+                        : 'Open the exam and order at least one test.'
+                    }
+                    className="btn-press w-full rounded-lg bg-primary-600 px-4 py-3 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Next step
+                  </button>
+                </>
+              }
+            >
               {getScenarioSectionGuidanceLine('tests')}
             </NextStepGuidance>
-            {!canAccessDiagnosis && (
-              <p className="text-xs text-slate-500">Open the exam and order a test to continue.</p>
-            )}
-            <button
-              type="button"
-              onClick={() => {
-                if (!canAccessDiagnosis) return
-                setMaxUnlockedStep((m) => Math.max(m, 4))
-                setActiveSection('diagnosis')
-              }}
-              disabled={!canAccessDiagnosis}
-              title={
-                canAccessDiagnosis
-                  ? undefined
-                  : 'Open the exam and order at least one test.'
-              }
-              className="btn-press w-full rounded-lg bg-primary-600 px-4 py-3 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:min-w-[11rem]"
-            >
-              Next step
-            </button>
           </div>
         </>
       )}

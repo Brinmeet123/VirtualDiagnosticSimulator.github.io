@@ -56,40 +56,44 @@ export default function ScenarioSectionHeader({ section, className = '' }: Props
   const showHints = tips.length > 0
 
   return (
-    <div
-      className={`mb-8 flex flex-wrap items-start justify-between gap-3 ${className}`}
-      ref={wrapRef}
-    >
-      <p className="text-sm font-medium text-slate-700 sm:text-[0.9375rem] leading-snug max-w-3xl">
-        {line}
-      </p>
-      {showHints && (
-        <div className="relative shrink-0">
-          <button
-            type="button"
-            onClick={() => setOpen((v) => !v)}
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-sm font-semibold text-slate-500 shadow-sm transition hover:border-slate-300 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
-            aria-expanded={open}
-            aria-label={open ? 'Hide hints' : 'Show hints'}
-          >
-            ?
-          </button>
-          {open && (
-            <div
-              role="tooltip"
-              className="absolute right-0 top-full z-20 mt-2 w-56 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-left text-xs text-slate-600 shadow-lg sm:w-60"
-            >
-              <ul className="space-y-1.5">
-                {tips.map((t, i) => (
-                  <li key={i} className="leading-snug">
-                    {t}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+    <div className={`mb-8 ${className}`} ref={wrapRef}>
+      <div className="flex flex-wrap items-center justify-center gap-3">
+        <div
+          className="inline-flex max-w-3xl items-center justify-center rounded-2xl border border-primary-200/80 bg-gradient-to-br from-primary-50/90 to-slate-50 px-5 py-3 text-center shadow-sm ring-1 ring-primary-100/60"
+          role="status"
+        >
+          <p className="text-sm font-semibold tracking-tight text-slate-800 sm:text-[0.9375rem] leading-snug">
+            {line}
+          </p>
         </div>
-      )}
+        {showHints && (
+          <div className="relative shrink-0">
+            <button
+              type="button"
+              onClick={() => setOpen((v) => !v)}
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-slate-200 bg-white text-sm font-semibold text-slate-500 shadow-sm transition hover:border-slate-300 hover:text-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primary-500"
+              aria-expanded={open}
+              aria-label={open ? 'Hide hints' : 'Show hints'}
+            >
+              ?
+            </button>
+            {open && (
+              <div
+                role="tooltip"
+                className="absolute left-1/2 top-full z-20 mt-2 w-56 -translate-x-1/2 rounded-lg border border-slate-200 bg-white px-3 py-2.5 text-left text-xs text-slate-600 shadow-lg sm:left-auto sm:right-0 sm:translate-x-0 sm:w-60"
+              >
+                <ul className="space-y-1.5">
+                  {tips.map((t, i) => (
+                    <li key={i} className="leading-snug">
+                      {t}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
