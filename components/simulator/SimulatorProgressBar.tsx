@@ -1,14 +1,14 @@
 'use client'
 
-/** In-case flow: Chat, exam, tests, diagnosis, results */
+/** In-case flow: Interview → Exam → Tests → Diagnosis → Result */
 export type SimulatorStep = 1 | 2 | 3 | 4 | 5
 
-const STEPS: { step: SimulatorStep; label: string; phase: string }[] = [
-  { step: 1, label: 'Ask Questions', phase: 'Gathering information' },
-  { step: 2, label: 'Review Exam', phase: 'Reviewing clues' },
-  { step: 3, label: 'Order Tests', phase: 'Gathering data' },
-  { step: 4, label: 'Make Diagnosis', phase: 'Committing to a diagnosis' },
-  { step: 5, label: 'See Results', phase: 'Reviewing feedback' },
+const STEPS: { step: SimulatorStep; label: string }[] = [
+  { step: 1, label: 'Interview' },
+  { step: 2, label: 'Exam' },
+  { step: 3, label: 'Tests' },
+  { step: 4, label: 'Diagnosis' },
+  { step: 5, label: 'Result' },
 ]
 
 type Props = {
@@ -18,50 +18,38 @@ type Props = {
 
 export default function SimulatorProgressBar({ currentStep, className = '' }: Props) {
   return (
-    <div
-      className={`w-full rounded-xl border border-slate-200/90 bg-white shadow-sm px-3 py-3 sm:px-4 ${className}`}
-      role="navigation"
-      aria-label="Simulator progress"
+    <nav
+      className={`w-full ${className}`}
+      aria-label="Case progress"
     >
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-2">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">Progress</p>
-          <p className="mt-0.5 text-sm font-medium text-slate-800">
-            Step {currentStep} of 5: {STEPS.find((s) => s.step === currentStep)?.phase}
-          </p>
-        </div>
-        <ol className="flex max-w-full flex-wrap items-center gap-x-1 gap-y-2 overflow-x-auto pb-0.5 text-xs sm:text-sm">
-          {STEPS.map(({ step, label }, idx) => {
-            const isCurrent = step === currentStep
-            const isPast = step < currentStep
-            return (
-              <li key={step} className="flex items-center gap-1">
-                {idx > 0 && (
-                  <span className="mx-0.5 text-slate-300 select-none" aria-hidden>
-                    /
-                  </span>
-                )}
-                <span
-                  className={[
-                    'inline-flex shrink-0 flex-col gap-0.5 rounded-full px-2 py-1 font-medium transition-colors sm:flex-row sm:items-center sm:gap-1',
-                    isCurrent
-                      ? 'bg-primary-100 text-primary-800 ring-1 ring-primary-200'
-                      : isPast
-                        ? 'bg-slate-100 text-slate-700'
-                        : 'bg-slate-50 text-slate-400',
-                  ].join(' ')}
-                >
-                  <span className="tabular-nums text-[0.7rem] opacity-80">Step {step}</span>
-                  <span className="leading-tight">{label}</span>
+      <ol className="flex flex-wrap items-center justify-center gap-x-1 gap-y-2 text-xs sm:text-sm">
+        {STEPS.map(({ step, label }, idx) => {
+          const isCurrent = step === currentStep
+          const isPast = step < currentStep
+          return (
+            <li key={step} className="flex items-center gap-x-1">
+              {idx > 0 && (
+                <span className="mx-0.5 text-slate-300 select-none" aria-hidden>
+                  →
                 </span>
-              </li>
-            )
-          })}
-        </ol>
-      </div>
-      <p className="mt-2 text-[11px] text-slate-500 sm:hidden">
-        {STEPS.find((s) => s.step === currentStep)?.label} — {STEPS.find((s) => s.step === currentStep)?.phase}
-      </p>
-    </div>
+              )}
+              <span
+                className={[
+                  'rounded-md px-2 py-1 font-medium transition-colors',
+                  isCurrent
+                    ? 'bg-primary-100 text-primary-800 ring-1 ring-primary-200/80'
+                    : isPast
+                      ? 'text-slate-600'
+                      : 'text-slate-400',
+                ].join(' ')}
+                aria-current={isCurrent ? 'step' : undefined}
+              >
+                {label}
+              </span>
+            </li>
+          )
+        })}
+      </ol>
+    </nav>
   )
 }

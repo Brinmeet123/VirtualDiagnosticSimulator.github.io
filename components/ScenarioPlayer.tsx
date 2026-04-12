@@ -14,10 +14,8 @@ import SummaryPanel from './SummaryPanel'
 import SectionNav, { ClinicalSection } from './SectionNav'
 import HistoryHelperPanel from './HistoryHelperPanel'
 import SimulatorProgressBar from './simulator/SimulatorProgressBar'
-import SimulatorHelpButton from './simulator/SimulatorHelpButton'
-import SimulatorStepInstruction from './simulator/SimulatorStepInstruction'
 import type { SimulatorStep } from './simulator/SimulatorProgressBar'
-import NextStepGuidance from './ux/NextStepGuidance'
+import ScenarioSectionHeader from './ux/ScenarioSectionHeader'
 
 type Message = {
   role: 'doctor' | 'patient'
@@ -422,33 +420,22 @@ export default function ScenarioPlayer({ scenario }: Props) {
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-      <SimulatorProgressBar currentStep={learnerStep} className="mb-4" />
-      <SimulatorHelpButton currentStep={learnerStep} activeSection={activeSection} />
+      <SimulatorProgressBar currentStep={learnerStep} className="mb-10" />
 
-      <div className="mb-6">
-        <p className="text-sm font-semibold text-primary-700 mb-1">Active case</p>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">{scenario.title}</h1>
-        <p className="text-lg text-slate-700 leading-relaxed">{scenario.description}</p>
+      <div className="mb-10">
+        <p className="text-xs font-medium uppercase tracking-wide text-slate-500 mb-2">Active case</p>
+        <h1 className="text-3xl font-bold text-gray-900 mb-3">{scenario.title}</h1>
+        <p className="text-base text-slate-600 leading-relaxed line-clamp-3">{scenario.description}</p>
       </div>
 
-      <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <h3 className="font-semibold text-blue-900 mb-2">Vital Signs</h3>
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 text-sm">
-          <div>
-            <span className="text-blue-700 font-medium">HR:</span> {scenario.patientPersona.vitals.heartRate} bpm
-          </div>
-          <div>
-            <span className="text-blue-700 font-medium">BP:</span> {scenario.patientPersona.vitals.bloodPressure}
-          </div>
-          <div>
-            <span className="text-blue-700 font-medium">RR:</span> {scenario.patientPersona.vitals.respiratoryRate} /min
-          </div>
-          <div>
-            <span className="text-blue-700 font-medium">O2 Sat:</span> {scenario.patientPersona.vitals.oxygenSat}
-          </div>
-          <div>
-            <span className="text-blue-700 font-medium">Temp:</span> {scenario.patientPersona.vitals.temperature}
-          </div>
+      <div className="mb-10 border-b border-slate-200 pb-8">
+        <p className="text-xs font-medium uppercase tracking-wide text-slate-500 mb-3">Vitals</p>
+        <div className="flex flex-wrap gap-x-8 gap-y-2 text-sm text-slate-700">
+          <span><span className="text-slate-500">HR</span> {scenario.patientPersona.vitals.heartRate} bpm</span>
+          <span><span className="text-slate-500">BP</span> {scenario.patientPersona.vitals.bloodPressure}</span>
+          <span><span className="text-slate-500">RR</span> {scenario.patientPersona.vitals.respiratoryRate}/min</span>
+          <span><span className="text-slate-500">SpO₂</span> {scenario.patientPersona.vitals.oxygenSat}</span>
+          <span><span className="text-slate-500">T</span> {scenario.patientPersona.vitals.temperature}</span>
         </div>
       </div>
 
@@ -463,15 +450,11 @@ export default function ScenarioPlayer({ scenario }: Props) {
         sections={sections}
       />
 
+      <ScenarioSectionHeader section={activeSection} />
+
       {/* Render only the active section */}
       {activeSection === 'history' && (
         <>
-          <SimulatorStepInstruction
-            title="Step 1: Ask questions"
-            description="Gather the story before you examine or order tests."
-            footerHint="When you're ready, continue to the exam — you can return to this tab anytime."
-          />
-
           {/* Mobile: Tabbed View */}
           {isMobile ? (
             <div className="mb-6">
@@ -551,16 +534,13 @@ export default function ScenarioPlayer({ scenario }: Props) {
             </div>
           )}
 
-          <div className="mt-6 space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-sm">
-            <NextStepGuidance compact>
-              Ask a few more questions — then head to the exam when you feel ready.
-            </NextStepGuidance>
+          <div className="mt-10">
             <button
               type="button"
               onClick={() => setActiveSection('exam')}
-              className="btn-press w-full rounded-lg bg-primary-600 px-4 py-3 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700"
+              className="btn-press w-full rounded-lg bg-primary-600 px-4 py-3 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 sm:w-auto sm:min-w-[11rem]"
             >
-              Continue to exam →
+              Continue
             </button>
           </div>
         </>
@@ -568,11 +548,6 @@ export default function ScenarioPlayer({ scenario }: Props) {
 
       {activeSection === 'exam' && (
         <>
-          <SimulatorStepInstruction
-            title="Step 2: Review the exam"
-            description="Open each system and read the findings like you would at the bedside."
-            footerHint="Next you'll order tests — take what you need from the exam first."
-          />
           <PhysicalExamPanel
             sections={scenario.physicalExam}
             scenarioId={scenario.id}
@@ -581,16 +556,13 @@ export default function ScenarioPlayer({ scenario }: Props) {
             onTermClick={handleTermClick}
             onTermSave={handleTermSave}
           />
-          <div className="mt-6 space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-sm">
-            <NextStepGuidance compact>
-              Ask a few more questions — then head to the exam when you feel ready.
-            </NextStepGuidance>
+          <div className="mt-10">
             <button
               type="button"
               onClick={() => setActiveSection('tests')}
-              className="btn-press w-full rounded-lg bg-primary-600 px-4 py-3 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700"
+              className="btn-press w-full rounded-lg bg-primary-600 px-4 py-3 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 sm:w-auto sm:min-w-[11rem]"
             >
-              Continue to tests →
+              Continue
             </button>
           </div>
         </>
@@ -598,11 +570,6 @@ export default function ScenarioPlayer({ scenario }: Props) {
 
       {activeSection === 'tests' && (
         <>
-          <SimulatorStepInstruction
-            title="Step 3: Order tests"
-            description="Pick studies you'd really order — you need at least one test before diagnosis unlocks."
-            footerHint="Then build your differential and choose a final diagnosis."
-          />
           <TestsPanel
             scenario={scenario}
             orderedTests={orderedTests}
@@ -610,14 +577,9 @@ export default function ScenarioPlayer({ scenario }: Props) {
             onTermClick={handleTermClick}
             onTermSave={handleTermSave}
           />
-          <div className="mt-6 space-y-3 rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-sm">
-            <NextStepGuidance compact>
-              Ask a few more questions — then head to the exam when you feel ready.
-            </NextStepGuidance>
+          <div className="mt-10 flex flex-col items-start gap-2">
             {!canAccessDiagnosis && (
-              <p className="text-sm text-amber-800">
-                Open an exam section and order at least one test to unlock diagnosis.
-              </p>
+              <p className="text-xs text-slate-500">Open the exam and order a test to continue.</p>
             )}
             <button
               type="button"
@@ -626,11 +588,11 @@ export default function ScenarioPlayer({ scenario }: Props) {
               title={
                 canAccessDiagnosis
                   ? undefined
-                  : 'Exam + at least one test required.'
+                  : 'Open the exam and order at least one test.'
               }
-              className="btn-press w-full rounded-lg bg-primary-600 px-4 py-3 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="btn-press w-full rounded-lg bg-primary-600 px-4 py-3 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:min-w-[11rem]"
             >
-              Continue to diagnosis →
+              Continue
             </button>
           </div>
         </>
@@ -638,16 +600,6 @@ export default function ScenarioPlayer({ scenario }: Props) {
 
       {activeSection === 'diagnosis' && (
         <>
-          <SimulatorStepInstruction
-            title="Step 4: Make your diagnosis"
-            description="Build a ranked differential, then pick one final answer you can defend."
-            footerHint="Submit to generate your report — strengths, gaps, and teaching points."
-          />
-          <div className="mb-4">
-            <NextStepGuidance compact>
-              Ask a few more questions — then head to the exam when you feel ready.
-            </NextStepGuidance>
-          </div>
           <DiagnosisPanel
             scenario={scenario}
             differential={differential}

@@ -409,7 +409,7 @@ export default function DiagnosisPanel({
         disabled={!finalDxId || differential.length === 0}
         className="btn-press w-full mt-6 px-6 py-3 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition font-semibold"
       >
-        See How You Did →
+        Submit Diagnosis
       </button>
     </div>
   )
