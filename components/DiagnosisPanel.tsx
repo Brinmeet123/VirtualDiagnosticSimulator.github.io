@@ -406,14 +406,16 @@ export default function DiagnosisPanel({
       </div>
 
       <div className="mt-6 max-w-xl space-y-3">
-        <NextStepGuidance compact>{getScenarioSectionGuidanceLine('diagnosis')}</NextStepGuidance>
+        <NextStepGuidance compact showHeading={false}>
+          {getScenarioSectionGuidanceLine('diagnosis')}
+        </NextStepGuidance>
         <button
           type="button"
           onClick={handleSubmit}
           disabled={!finalDxId || differential.length === 0}
           className="btn-press w-full px-6 py-3 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition font-semibold"
         >
-          Submit Diagnosis
+          Next step
         </button>
       </div>
     </div>

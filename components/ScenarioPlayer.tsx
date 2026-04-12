@@ -118,12 +118,7 @@ export default function ScenarioPlayer({ scenario }: Props) {
   const [scenarioScore, setScenarioScore] = useState<ScenarioScoreState | null>(null)
   const [activeSection, setActiveSection] = useState<ClinicalSection>('history')
   const [maxUnlockedStep, setMaxUnlockedStep] = useState(1)
-  const [chatMessages, setChatMessages] = useState<Message[]>([
-    {
-      role: 'patient',
-      content: `Hello, doctor. ${scenario.patientPersona.chiefComplaint}.`
-    }
-  ])
+  const [chatMessages, setChatMessages] = useState<Message[]>([])
   const [viewedExamSections, setViewedExamSections] = useState<string[]>([])
   const [orderedTests, setOrderedTests] = useState<Map<string, OrderedTestData>>(new Map())
   const [differential, setDifferential] = useState<DifferentialItem[]>([])
@@ -425,14 +420,24 @@ export default function ScenarioPlayer({ scenario }: Props) {
         <p className="text-base text-slate-600 leading-relaxed line-clamp-3">{scenario.description}</p>
       </div>
 
-      <div className="mb-10 border-b border-slate-200 pb-8">
-        <h3 className="font-semibold text-blue-900 mb-3">Vital Signs</h3>
-        <div className="flex flex-wrap gap-x-8 gap-y-2 text-sm text-slate-700">
-          <span><span className="text-slate-500">HR</span> {scenario.patientPersona.vitals.heartRate} bpm</span>
-          <span><span className="text-slate-500">BP</span> {scenario.patientPersona.vitals.bloodPressure}</span>
-          <span><span className="text-slate-500">RR</span> {scenario.patientPersona.vitals.respiratoryRate}/min</span>
-          <span><span className="text-slate-500">SpO₂</span> {scenario.patientPersona.vitals.oxygenSat}</span>
-          <span><span className="text-slate-500">T</span> {scenario.patientPersona.vitals.temperature}</span>
+      <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <h3 className="font-semibold text-blue-900 mb-2">Vital Signs</h3>
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 text-sm">
+          <div>
+            <span className="text-blue-700 font-medium">HR:</span> {scenario.patientPersona.vitals.heartRate} bpm
+          </div>
+          <div>
+            <span className="text-blue-700 font-medium">BP:</span> {scenario.patientPersona.vitals.bloodPressure}
+          </div>
+          <div>
+            <span className="text-blue-700 font-medium">RR:</span> {scenario.patientPersona.vitals.respiratoryRate} /min
+          </div>
+          <div>
+            <span className="text-blue-700 font-medium">SpO₂:</span> {scenario.patientPersona.vitals.oxygenSat}
+          </div>
+          <div>
+            <span className="text-blue-700 font-medium">T:</span> {scenario.patientPersona.vitals.temperature}
+          </div>
         </div>
       </div>
 
@@ -485,7 +490,6 @@ export default function ScenarioPlayer({ scenario }: Props) {
               {mobileTab === 'helper' ? (
                 <div className="min-h-[400px]">
                   <HistoryHelperPanel
-                    scenario={scenario}
                     onInsertQuestion={handleInsertQuestion}
                     messages={chatMessages}
                   />
@@ -510,7 +514,6 @@ export default function ScenarioPlayer({ scenario }: Props) {
                 {/* Left Panel: Helper */}
                 <div className="w-2/5 bg-gray-50 rounded-lg overflow-hidden p-4">
                   <HistoryHelperPanel
-                    scenario={scenario}
                     onInsertQuestion={handleInsertQuestion}
                     messages={chatMessages}
                   />
@@ -534,7 +537,9 @@ export default function ScenarioPlayer({ scenario }: Props) {
           )}
 
           <div className="mt-10 max-w-xl space-y-3">
-            <NextStepGuidance compact>{getScenarioSectionGuidanceLine('history')}</NextStepGuidance>
+            <NextStepGuidance compact showHeading={false}>
+              {getScenarioSectionGuidanceLine('history')}
+            </NextStepGuidance>
             <button
               type="button"
               onClick={() => {
@@ -543,7 +548,7 @@ export default function ScenarioPlayer({ scenario }: Props) {
               }}
               className="btn-press w-full rounded-lg bg-primary-600 px-4 py-3 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 sm:w-auto sm:min-w-[11rem]"
             >
-              Continue
+              Next step
             </button>
           </div>
         </>
@@ -560,7 +565,9 @@ export default function ScenarioPlayer({ scenario }: Props) {
             onTermSave={handleTermSave}
           />
           <div className="mt-10 max-w-xl space-y-3">
-            <NextStepGuidance compact>{getScenarioSectionGuidanceLine('exam')}</NextStepGuidance>
+            <NextStepGuidance compact showHeading={false}>
+              {getScenarioSectionGuidanceLine('exam')}
+            </NextStepGuidance>
             <button
               type="button"
               onClick={() => {
@@ -569,7 +576,7 @@ export default function ScenarioPlayer({ scenario }: Props) {
               }}
               className="btn-press w-full rounded-lg bg-primary-600 px-4 py-3 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 sm:w-auto sm:min-w-[11rem]"
             >
-              Continue
+              Next step
             </button>
           </div>
         </>
@@ -585,7 +592,9 @@ export default function ScenarioPlayer({ scenario }: Props) {
             onTermSave={handleTermSave}
           />
           <div className="mt-10 flex max-w-xl flex-col items-stretch gap-3">
-            <NextStepGuidance compact>{getScenarioSectionGuidanceLine('tests')}</NextStepGuidance>
+            <NextStepGuidance compact showHeading={false}>
+              {getScenarioSectionGuidanceLine('tests')}
+            </NextStepGuidance>
             {!canAccessDiagnosis && (
               <p className="text-xs text-slate-500">Open the exam and order a test to continue.</p>
             )}
@@ -604,7 +613,7 @@ export default function ScenarioPlayer({ scenario }: Props) {
               }
               className="btn-press w-full rounded-lg bg-primary-600 px-4 py-3 text-center text-sm font-semibold text-white shadow-sm transition hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:min-w-[11rem]"
             >
-              Continue
+              Next step
             </button>
           </div>
         </>

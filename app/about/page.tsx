@@ -1,5 +1,4 @@
 import Link from 'next/link'
-import NextStepGuidance from '@/components/ux/NextStepGuidance'
 
 export default function AboutPage() {
   return (
@@ -46,12 +45,6 @@ export default function AboutPage() {
             </p>
             <p>For real symptoms or emergencies, see a qualified clinician.</p>
           </div>
-        </div>
-
-        <div className="mt-10 max-w-lg not-prose">
-          <NextStepGuidance>
-            Ask a few more questions — then head to the exam when you feel ready.
-          </NextStepGuidance>
         </div>
 
         <div className="mt-8 not-prose">

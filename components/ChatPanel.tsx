@@ -44,14 +44,7 @@ export default function ChatPanel({
   onTermClick,
   onTermSave,
 }: Props) {
-  const [messages, setMessages] = useState<Message[]>(
-    initialMessages || [
-      {
-        role: 'patient',
-        content: `Hello, doctor. ${scenario.patientPersona.chiefComplaint}.`
-      }
-    ]
-  )
+  const [messages, setMessages] = useState<Message[]>(() => initialMessages ?? [])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [questionHint, setQuestionHint] = useState<string | null>(null)
@@ -262,6 +255,11 @@ export default function ChatPanel({
         ref={messagesScrollRef}
         className="flex-1 min-h-0 overflow-y-auto mb-4 space-y-4 pr-2 overscroll-contain"
       >
+        {messages.length === 0 && (
+          <p className="text-sm text-slate-500 text-center py-6 px-2">
+            Start the interview — type an opening question below. The patient will reply after you send a message.
+          </p>
+        )}
         {messages.map((msg, idx) => (
           <div
             key={idx}

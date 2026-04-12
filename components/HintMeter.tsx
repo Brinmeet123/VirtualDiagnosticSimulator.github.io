@@ -1,14 +1,11 @@
 'use client'
 
-import { Scenario } from '@/data/scenarios'
-
 type Message = {
   role: 'doctor' | 'patient'
   content: string
 }
 
 type Props = {
-  scenario: Scenario
   messages: Message[]
 }
 
@@ -17,9 +14,12 @@ type HintStatus = {
   status: 'explored' | 'partial' | 'not-discussed'
 }
 
-export default function HintMeter({ scenario, messages }: Props) {
-  // Analyze chat messages to determine what's been discussed
-  const chatText = messages.map(m => m.content.toLowerCase()).join(' ')
+export default function HintMeter({ messages }: Props) {
+  // Only doctor turns count — patient lines like "Hello, doctor" must not skew coverage.
+  const chatText = messages
+    .filter((m) => m.role === 'doctor')
+    .map((m) => m.content.toLowerCase())
+    .join(' ')
   
   const hints: HintStatus[] = [
     {

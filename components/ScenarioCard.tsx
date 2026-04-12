@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import { Scenario, ScenarioDifficulty } from '@/data/scenarios'
 import type { ScenarioProgressInfo } from './ScenarioList'
-import { difficultyUiLabel, scenarioCardHook } from '@/lib/scenarioUi'
+import { difficultyUiLabel } from '@/lib/scenarioUi'
 
 type Props = {
   scenario: Scenario
@@ -64,7 +64,7 @@ export default function ScenarioCard({ scenario, progress }: Props) {
           <span className="text-sm text-gray-500">{scenario.estimatedMinutes} min</span>
         </div>
         <p className="text-gray-600 text-sm flex-grow mb-2">{scenario.description}</p>
-        <p className="text-sm text-slate-500 italic mb-3 leading-snug">{scenarioCardHook(scenario)}</p>
+        <p className="text-sm text-slate-500 italic mb-3 leading-snug">{scenario.cardTeaser}</p>
         {progress &&
           (progress.bestScore != null || progress.lastAttemptScore != null) &&
           (progress.status === 'completed' || progress.status === 'in_progress') && (

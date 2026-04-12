@@ -3,9 +3,16 @@ type Props = {
   className?: string
   /** Visually de-emphasize when used inline in a dense layout */
   compact?: boolean
+  /** When false, only the hint text is shown (e.g. next to a "Next step" button). */
+  showHeading?: boolean
 }
 
-export default function NextStepGuidance({ children, className = '', compact }: Props) {
+export default function NextStepGuidance({
+  children,
+  className = '',
+  compact,
+  showHeading = true,
+}: Props) {
   return (
     <div
       className={[
@@ -15,13 +22,17 @@ export default function NextStepGuidance({ children, className = '', compact }: 
       ].join(' ')}
       role="note"
     >
-      <p className="font-medium text-amber-900">
-        <span className="mr-1.5" aria-hidden>
-          👉
-        </span>
-        Next step
+      {showHeading && (
+        <p className="font-medium text-amber-900">
+          <span className="mr-1.5" aria-hidden>
+            👉
+          </span>
+          Next step
+        </p>
+      )}
+      <p className={[showHeading ? 'mt-1' : '', 'text-amber-950/90 leading-snug'].filter(Boolean).join(' ')}>
+        {children}
       </p>
-      <p className="mt-1 text-amber-950/90 leading-snug">{children}</p>
     </div>
   )
 }

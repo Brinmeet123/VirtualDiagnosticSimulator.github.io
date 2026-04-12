@@ -1,4 +1,4 @@
-import type { Scenario, ScenarioDifficulty } from '@/data/scenarios'
+import type { ScenarioDifficulty } from '@/data/scenarios'
 
 export type DifficultyUiLabel = 'Easy' | 'Medium' | 'Hard'
 
@@ -15,8 +15,3 @@ export function difficultyUiLabel(d: ScenarioDifficulty): DifficultyUiLabel {
   }
 }
 
-/** Short teaser under each scenario card — uses chief complaint + generic hook. */
-export function scenarioCardHook(scenario: Scenario): string {
-  const cc = scenario.patientPersona.chiefComplaint.trim()
-  return `${cc} — Many possibilities until you gather the full story.`
-}

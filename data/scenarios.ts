@@ -167,6 +167,8 @@ export type Scenario = {
   difficulty: ScenarioDifficulty;
   estimatedMinutes: number;
   description: string;
+  /** One-line hook in the patient's voice for scenario list cards */
+  cardTeaser: string;
   objectives: string[];
   patientPersona: PatientPersona;
   aiInstructions: AIInstructions;
@@ -192,6 +194,7 @@ export const scenarios: Scenario[] = [
     estimatedMinutes: 12,
     description:
       "You are the ER doctor evaluating a 54-year-old man with chest pain that started 30 minutes ago while walking up stairs.",
+    cardTeaser: "It came on when I was walking up the stairs…",
     objectives: [
       "Practice taking a focused chest pain history.",
       "Identify red flags that suggest an urgent cardiac cause.",
@@ -424,6 +427,7 @@ export const scenarios: Scenario[] = [
     estimatedMinutes: 12,
     description:
       "A 42-year-old woman presents with a sudden, severe headache that started one hour ago.",
+    cardTeaser: "I've never had a headache like this in my life.",
     objectives: [
       "Identify red flags in headache evaluation",
       "Differentiate primary vs secondary headache causes",
@@ -536,6 +540,7 @@ export const scenarios: Scenario[] = [
     estimatedMinutes: 12,
     description:
       "A 60-year-old man presents with sudden onset shortness of breath.",
+    cardTeaser: "I just can't seem to catch my breath.",
     objectives: [
       "Differentiate cardiac vs pulmonary causes",
       "Recognize pulmonary embolism red flags",
@@ -646,6 +651,7 @@ export const scenarios: Scenario[] = [
     estimatedMinutes: 10,
     description:
       "A 19-year-old college student presents with abdominal pain.",
+    cardTeaser: "My stomach has been killing me since last night.",
     objectives: [
       "Use location-based differential diagnosis",
       "Recognize appendicitis presentation",
@@ -753,6 +759,7 @@ export const scenarios: Scenario[] = [
     estimatedMinutes: 14,
     description:
       "A 70-year-old woman presents with fever and acute confusion.",
+    cardTeaser: "She just hasn't been herself since yesterday.",
     objectives: [
       "Recognize sepsis and CNS infection",
       "Prioritize dangerous diagnoses",
