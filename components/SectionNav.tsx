@@ -122,7 +122,7 @@ export default function SectionNav({
 
   return (
     <div
-      className="sticky top-0 z-10 mb-6 w-screen max-w-[100vw] ml-[calc(50%-50vw)] border-b border-slate-200/90 bg-white shadow-sm"
+      className="sticky top-0 z-10 mb-6 w-full rounded-lg border border-slate-200/90 bg-white shadow-sm overflow-hidden"
       role="navigation"
       aria-label="Case steps"
     >
