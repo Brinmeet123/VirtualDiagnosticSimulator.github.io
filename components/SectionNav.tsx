@@ -55,19 +55,21 @@ function tabButtonClasses(opts: {
   isUnlockedAhead: boolean
 }) {
   const { isActive, isCompleted, isLocked, isUnlockedAhead } = opts
+  const base =
+    'flex flex-1 min-w-0 min-h-[4rem] sm:min-h-[4.25rem] items-center justify-center border-r border-slate-200/90 last:border-r-0 transition-colors duration-300 ease-out'
   if (isLocked) {
-    return 'border-transparent text-slate-400 opacity-[0.55] cursor-not-allowed font-medium'
+    return `${base} bg-slate-100/95 text-slate-400 opacity-[0.72] cursor-not-allowed font-medium`
   }
   if (isActive) {
-    return 'border-primary-600 text-primary-700 font-bold cursor-pointer'
+    return `${base} bg-primary-100 text-primary-900 font-bold cursor-pointer shadow-[inset_0_-4px_0_0] shadow-primary-600`
   }
   if (isCompleted) {
-    return 'border-emerald-500 text-emerald-800 font-semibold cursor-pointer hover:text-emerald-900'
+    return `${base} bg-emerald-50 text-emerald-900 font-semibold cursor-pointer hover:bg-emerald-100/90`
   }
   if (isUnlockedAhead) {
-    return 'border-transparent text-slate-600 font-medium cursor-pointer hover:text-slate-900 hover:border-slate-300'
+    return `${base} bg-slate-50 text-slate-600 font-medium cursor-pointer hover:bg-slate-100/90`
   }
-  return 'border-transparent text-slate-600 font-medium cursor-pointer hover:text-slate-900 hover:border-slate-300'
+  return `${base} bg-slate-50 text-slate-600 font-medium cursor-pointer hover:bg-slate-100/90`
 }
 
 export default function SectionNav({
@@ -79,11 +81,8 @@ export default function SectionNav({
 }: Props) {
   const activeStep = clinicalSectionToStep(active)
   const clampedMax = Math.max(1, Math.min(SECTION_STEP_COUNT, maxUnlockedStep))
-  const progressMilestone = canAccessDebrief ? SECTION_STEP_COUNT : clampedMax
-  const progressPercent = ((progressMilestone - 1) / (SECTION_STEP_COUNT - 1)) * 100
 
-  const renderTab = (isDesktop: boolean) =>
-    SECTION_ORDER.map((section, index) => {
+  const tabs = SECTION_ORDER.map((section, index) => {
       const step = index + 1
       const isActive = active === section.id
       const hardLockDiagnosis = section.id === 'diagnosis' && !canAccessDiagnosis
@@ -92,8 +91,6 @@ export default function SectionNav({
       const isLocked = hardLockDiagnosis || hardLockDebrief || stepLock
       const isCompleted = step < activeStep
       const isUnlockedAhead = !isLocked && !isActive && step > activeStep
-
-      const padding = isDesktop ? 'px-6 py-4' : 'px-4 py-3 flex-shrink-0'
 
       let lockTitle: string | undefined
       if (isLocked) {
@@ -108,36 +105,27 @@ export default function SectionNav({
           type="button"
           onClick={() => !isLocked && onChange(section.id)}
           disabled={isLocked}
-          className={[
-            'relative text-sm transition-colors duration-300 ease-out border-b-[3px]',
-            padding,
-            tabButtonClasses({ isActive, isCompleted, isLocked, isUnlockedAhead }),
-          ].join(' ')}
+          className={['relative text-sm px-2 sm:px-4', tabButtonClasses({ isActive, isCompleted, isLocked, isUnlockedAhead })].join(
+            ' '
+          )}
           title={lockTitle}
         >
-          <span className="inline-flex items-center gap-1.5">
+          <span className="inline-flex max-w-full items-center justify-center gap-1.5 truncate">
             {isCompleted && <CheckIcon className="shrink-0 text-emerald-600" />}
-            {section.label}
+            <span className="truncate">{section.label}</span>
           </span>
         </button>
       )
     })
 
   return (
-    <div className="sticky top-0 z-10 mb-6 border-b border-gray-200 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="hidden md:flex">{renderTab(true)}</div>
-
-        <div className="md:hidden">
-          <div className="-mx-4 flex overflow-x-auto px-4 scrollbar-hide">{renderTab(false)}</div>
-        </div>
-
-        <div className="h-1 w-full bg-slate-200/90" aria-hidden>
-          <div
-            className="h-full bg-primary-600 transition-[width] duration-300 ease-out"
-            style={{ width: `${progressPercent}%` }}
-          />
-        </div>
+    <div
+      className="sticky top-0 z-10 mb-6 w-screen max-w-[100vw] ml-[calc(50%-50vw)] border-b border-slate-200/90 bg-white shadow-sm"
+      role="navigation"
+      aria-label="Case steps"
+    >
+      <div className="flex w-full min-w-0 overflow-x-auto scrollbar-hide md:overflow-visible">
+        {tabs}
       </div>
     </div>
   )
